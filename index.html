@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BittsMatic</title>
+    <link rel="stylesheet" href="./src/styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="game-panel">
+        <canvas id="game" width="1152" height="864" aria-label="BittsMatic factory grid"></canvas>
+      </section>
+      <aside class="side-panel">
+        <div>
+          <h1>BittsMatic</h1>
+          <p class="subtle">Build belts, feed the core, unlock machines.</p>
+        </div>
+
+        <div class="toolbar" id="toolbar" aria-label="Build tools"></div>
+
+        <section>
+          <h2>Inventory</h2>
+          <div class="resource-list" id="resources"></div>
+        </section>
+
+        <section>
+          <h2>Milestones</h2>
+          <div class="milestones" id="milestones"></div>
+        </section>
+
+        <section>
+          <h2>Controls</h2>
+          <div class="control-grid">
+            <span>Place</span><strong>Left click / drag</strong>
+            <span>Rotate</span><strong>Right click or R</strong>
+            <span>Remove</span><strong>Pick delete tool</strong>
+            <span>Tools</span><strong>1-5</strong>
+          </div>
+        </section>
+      </aside>
+    </main>
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>
