@@ -21,6 +21,12 @@ export class InputHandler {
     this.selectionStart = null;
     this.selecting = false;
     this.pasteBlueprint = null;
+    this.touchStartPos = null;
+    this.touchPinchDist = null;
+    this.touchPinchMid = null;
+    this.touchPinchAccum = 0;
+    this.touchLongPressTimer = null;
+    this.touchDragStarted = false;
     this.#bind();
   }
 
@@ -48,6 +54,15 @@ export class InputHandler {
       this.#rotateAtPointer(event);
     });
     window.addEventListener("keydown", (event) => this.#onKey(event));
+    this.canvas.addEventListener("touchstart",  (e) => this.#onTouchStart(e),  { passive: false });
+    this.canvas.addEventListener("touchmove",   (e) => this.#onTouchMove(e),   { passive: false });
+    this.canvas.addEventListener("touchend",    (e) => this.#onTouchEnd(e),    { passive: false });
+    this.canvas.addEventListener("touchcancel", (e) => this.#onTouchEnd(e),    { passive: false });
+    const rotateBtn = document.getElementById("touch-rotate-btn");
+    if (rotateBtn) rotateBtn.addEventListener("click", () => {
+      this.direction = rotateDirection(this.direction);
+      this.updateUi();
+    });
   }
 
   #onMove(event) {
@@ -361,5 +376,138 @@ export class InputHandler {
   #cancelSelectionDrag() {
     this.selecting = false;
     this.selectionStart = null;
+  }
+
+  #onTouchStart(e) {
+    e.preventDefault();
+    clearTimeout(this.touchLongPressTimer);
+    this.touchLongPressTimer = null;
+
+    if (e.touches.length === 1) {
+      const t = e.touches[0];
+      this.touchStartPos = { x: t.clientX, y: t.clientY };
+      this.touchDragStarted = false;
+
+      const point = this.renderer.screenToGrid(t.clientX, t.clientY);
+      if (point) {
+        this.renderer.hoveredMachine = this.grid.getMachine(point.x, point.y);
+        this.renderer.preview = {
+          ...point,
+          ...this.#footprintForSelection(point.x, point.y),
+          valid: this.#canPlace(point.x, point.y)
+        };
+      }
+
+      this.touchLongPressTimer = setTimeout(() => {
+        this.touchLongPressTimer = null;
+        if (!this.touchDragStarted) {
+          this.#rotateAtPointer({ clientX: t.clientX, clientY: t.clientY });
+        }
+      }, 400);
+
+    } else if (e.touches.length === 2) {
+      clearTimeout(this.touchLongPressTimer);
+      this.touchLongPressTimer = null;
+      this.dragging = false;
+      this.panning = false;
+      this.lastPlacedKey = "";
+      this.touchDragStarted = false;
+
+      const [t1, t2] = e.touches;
+      this.touchPinchDist  = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+      this.touchPinchMid   = { x: (t1.clientX + t2.clientX) / 2, y: (t1.clientY + t2.clientY) / 2 };
+      this.touchPinchAccum = 0;
+    }
+  }
+
+  #onTouchMove(e) {
+    e.preventDefault();
+
+    if (e.touches.length === 1 && this.touchPinchDist === null) {
+      const t = e.touches[0];
+      if (!this.touchDragStarted && this.touchStartPos) {
+        const dx = t.clientX - this.touchStartPos.x;
+        const dy = t.clientY - this.touchStartPos.y;
+        if (Math.hypot(dx, dy) > 8) {
+          clearTimeout(this.touchLongPressTimer);
+          this.touchLongPressTimer = null;
+          this.touchDragStarted = true;
+          this.dragging = this.selectedTool === "belt";
+          this.lastPlacedKey = "";
+        }
+      }
+      this.#onMove({ clientX: t.clientX, clientY: t.clientY, buttons: 1 });
+
+    } else if (e.touches.length === 2) {
+      clearTimeout(this.touchLongPressTimer);
+      this.touchLongPressTimer = null;
+
+      const [t1, t2] = e.touches;
+      const newDist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+      const newMid  = { x: (t1.clientX + t2.clientX) / 2, y: (t1.clientY + t2.clientY) / 2 };
+
+      if (this.touchPinchMid) {
+        this.renderer.panBy(
+          this.touchPinchMid.x - newMid.x,
+          this.touchPinchMid.y - newMid.y
+        );
+      }
+
+      if (this.touchPinchDist !== null) {
+        this.touchPinchAccum += this.touchPinchDist - newDist;
+        if (Math.abs(this.touchPinchAccum) >= 20) {
+          this.renderer.zoomAt(newMid.x, newMid.y, this.touchPinchAccum);
+          this.touchPinchAccum = 0;
+        }
+      }
+
+      this.touchPinchDist = newDist;
+      this.touchPinchMid  = newMid;
+    }
+  }
+
+  #onTouchEnd(e) {
+    e.preventDefault();
+
+    if (e.touches.length === 0) {
+      const timerStillPending = this.touchLongPressTimer !== null;
+      clearTimeout(this.touchLongPressTimer);
+      this.touchLongPressTimer = null;
+
+      if (this.touchStartPos && !this.touchDragStarted && timerStillPending) {
+        const touch = e.changedTouches[0];
+        const point = this.renderer.screenToGrid(touch.clientX, touch.clientY);
+        if (point) {
+          if (this.pasteBlueprint) {
+            if (this.blueprints.paste(this.pasteBlueprint, point.x, point.y)) this.updateUi();
+            this.#updatePastePreview(point);
+          } else if (this.selectedTool === "belt") {
+            const existing = this.grid.getBelt(point.x, point.y);
+            if (existing) { this.#cyclePriority(existing); this.updateUi(); }
+            else this.#apply(point);
+          } else {
+            this.#apply(point);
+          }
+        }
+      }
+
+      this.dragging          = false;
+      this.panning           = false;
+      this.lastPan           = null;
+      this.lastPlacedKey     = "";
+      this.touchStartPos     = null;
+      this.touchDragStarted  = false;
+      this.touchPinchDist    = null;
+      this.touchPinchMid     = null;
+      this.touchPinchAccum   = 0;
+
+    } else if (e.touches.length === 1) {
+      this.touchPinchDist   = null;
+      this.touchPinchMid    = null;
+      this.touchPinchAccum  = 0;
+      const t = e.touches[0];
+      this.touchStartPos    = { x: t.clientX, y: t.clientY };
+      this.touchDragStarted = false;
+    }
   }
 }

@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>BittsMatic</title>
     <meta name="google-signin-client_id" content="110632840196-ufm82a21h74p6utj3ca3gv4blm9nkkp0.apps.googleusercontent.com" />
     <link rel="stylesheet" href="./src/styles.css" />
@@ -25,6 +25,7 @@
         </div>
         <div class="success-toast" id="successToast" role="status">Objective complete</div>
         <canvas id="game" width="1152" height="864" aria-label="BittsMatic factory grid"></canvas>
+        <button id="touch-rotate-btn" class="touch-rotate-btn" type="button" aria-label="Rotate placement direction">↻ Rotate</button>
       </section>
       <aside class="side-panel">
         <div class="profile-row">
@@ -79,6 +80,10 @@
             <span>Priority</span><strong>Click belt</strong>
             <span>Tools</span><strong>1-9</strong>
           </div>
+          <p class="touch-controls-hint">
+            <strong>Touch:</strong> Tap to place · Drag to draw belts ·
+            Long-press to rotate · Two-finger drag to pan · Pinch to zoom
+          </p>
         </section>
       </aside>
     </main>
