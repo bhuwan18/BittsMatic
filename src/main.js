@@ -29,6 +29,8 @@ const objectiveBanner = document.querySelector("#objectiveBanner");
 const successToast = document.querySelector("#successToast");
 const upgradePointsLabel = document.querySelector("#upgradePointsLabel");
 const upgradeShop = document.querySelector("#upgradeShop");
+const controlsToggle = document.querySelector("#controlsToggle");
+const controlsContent = document.querySelector("#controlsContent");
 
 const auth = new AuthSession();
 const markers = new MarkerManager();
@@ -130,6 +132,10 @@ function startGame() {
   copyBlueprintButton.addEventListener("click", () => input.copySelection());
   pasteBlueprintButton.addEventListener("click", () => input.enterPasteMode());
   rotateBlueprintButton.addEventListener("click", () => input.rotatePasteBlueprint());
+  controlsToggle.addEventListener("click", () => {
+    const nowCollapsed = controlsContent.classList.toggle("collapsed");
+    controlsToggle.setAttribute("aria-expanded", String(!nowCollapsed));
+  });
 
   window.addEventListener("resize", () => renderer.resize());
   renderer.resize();
@@ -205,16 +211,20 @@ function renderBlueprint() {
   }
 }
 
+function swatchColor(value) {
+  const hue = (Number(value) * 137.508) % 360;
+  return `hsl(${hue.toFixed(0)}, 60%, 55%)`;
+}
+
 function renderResources() {
   const known = [...progression.resources.keys()].sort((a, b) => Number(a) - Number(b));
-  const values = known.length ? known : ["none"];
-  resources.replaceChildren(...values.map((value) => {
+  resources.replaceChildren(...(known.length ? known : [null]).map((value) => {
     const row = document.createElement("div");
     row.className = "resource-row";
-    if (value === "none") {
-      row.innerHTML = `<span class="swatch"></span><span>core values</span><strong>0</strong>`;
+    if (value === null) {
+      row.innerHTML = `<span class="swatch" style="background:#2e7da4;opacity:0.4"></span><span style="color:#6a8a96;font-style:italic">No deliveries yet</span><strong style="color:#6a8a96">—</strong>`;
     } else {
-      row.innerHTML = `<span class="swatch"></span><span>${value}</span><strong>${progression.count(value)}</strong>`;
+      row.innerHTML = `<span class="swatch" style="background:${swatchColor(value)}"></span><span>${value}</span><strong>${progression.count(value)}</strong>`;
     }
     return row;
   }));
@@ -226,7 +236,7 @@ function renderMilestones() {
     item.className = "milestone";
     item.dataset.unlocked = String(milestone.unlocked);
     const status = milestone.unlocked
-      ? "Unlocked"
+      ? "✓ Unlocked"
       : `Unlocks at level ${milestone.requiredLevel}`;
     item.innerHTML = `<strong>${milestone.label}</strong><span>${status}</span>`;
     return item;
@@ -235,7 +245,7 @@ function renderMilestones() {
 
 function renderUpgrades() {
   const pts = progression.upgradePoints;
-  upgradePointsLabel.textContent = `${pts} upgrade point${pts !== 1 ? "s" : ""} (earned per correct delivery)`;
+  upgradePointsLabel.innerHTML = `<span class="pts-badge">${pts}</span> point${pts !== 1 ? "s" : ""} to spend`;
 
   upgradeShop.replaceChildren(...progression.availableUpgrades().map((upgrade) => {
     const item = document.createElement("div");

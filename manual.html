@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BittsMatic — User Manual</title>
+  <style>
+    /* ── Reset & Base ─────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0d1117;
+      --surface:   #161b22;
+      --card:      #1c2230;
+      --border:    #2d3748;
+      --accent:    #58a6ff;
+      --accent2:   #79c0ff;
+      --gold:      #ffe066;
+      --green:     #3fb950;
+      --red:       #f85149;
+      --purple:    #bc8cff;
+      --orange:    #ffa657;
+      --text:      #e6edf3;
+      --muted:     #8b949e;
+      --code-bg:   #0d1117;
+      --radius:    8px;
+      --shadow:    0 4px 20px rgba(0,0,0,.4);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      font-size: 15px;
+    }
+
+    /* ── Layout ───────────────────────────────────────────────── */
+    .page-wrap {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      min-height: 100vh;
+    }
+
+    /* ── Sidebar ──────────────────────────────────────────────── */
+    nav.sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 28px 0 40px;
+    }
+
+    nav.sidebar .logo {
+      padding: 0 24px 20px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+
+    nav.sidebar .logo h1 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: .5px;
+    }
+
+    nav.sidebar .logo span {
+      font-size: .75rem;
+      color: var(--muted);
+      display: block;
+      margin-top: 2px;
+    }
+
+    nav.sidebar ul {
+      list-style: none;
+      padding: 0 12px;
+    }
+
+    nav.sidebar ul li a {
+      display: block;
+      padding: 7px 12px;
+      color: var(--muted);
+      text-decoration: none;
+      border-radius: 6px;
+      font-size: .85rem;
+      transition: background .15s, color .15s;
+    }
+
+    nav.sidebar ul li a:hover,
+    nav.sidebar ul li a.active {
+      background: rgba(88,166,255,.12);
+      color: var(--accent2);
+    }
+
+    nav.sidebar .section-label {
+      font-size: .7rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--muted);
+      padding: 16px 24px 4px;
+      font-weight: 600;
+    }
+
+    /* ── Main content ─────────────────────────────────────────── */
+    main {
+      padding: 48px 60px 80px;
+      max-width: 860px;
+    }
+
+    /* ── Hero ─────────────────────────────────────────────────── */
+    .hero {
+      background: linear-gradient(135deg, #0f2540 0%, #1a1f35 60%, #12161e 100%);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 48px 44px;
+      margin-bottom: 52px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      top: -40px; right: -40px;
+      width: 240px; height: 240px;
+      background: radial-gradient(circle, rgba(88,166,255,.15) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero h1 {
+      font-size: 2.4rem;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -.5px;
+      line-height: 1.2;
+    }
+
+    .hero h1 span { color: var(--accent); }
+
+    .hero p {
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 1rem;
+      max-width: 500px;
+    }
+
+    .hero .badge-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      font-size: .75rem;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 20px;
+      letter-spacing: .3px;
+    }
+
+    .badge-blue   { background: rgba(88,166,255,.15); color: var(--accent2); border: 1px solid rgba(88,166,255,.3); }
+    .badge-gold   { background: rgba(255,224,102,.12); color: var(--gold);  border: 1px solid rgba(255,224,102,.3); }
+    .badge-green  { background: rgba(63,185,80,.12);  color: var(--green);  border: 1px solid rgba(63,185,80,.3); }
+    .badge-purple { background: rgba(188,140,255,.12);color: var(--purple); border: 1px solid rgba(188,140,255,.3); }
+
+    /* ── Sections ─────────────────────────────────────────────── */
+    section { margin-bottom: 56px; }
+
+    h2 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #fff;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--border);
+      margin-bottom: 24px;
+    }
+
+    h2 .section-icon {
+      display: inline-block;
+      margin-right: 8px;
+      opacity: .85;
+    }
+
+    h3 {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--accent2);
+      margin: 28px 0 10px;
+    }
+
+    h4 {
+      font-size: .9rem;
+      font-weight: 600;
+      color: var(--gold);
+      margin: 18px 0 6px;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+
+    p { margin-bottom: 10px; color: var(--text); }
+
+    /* ── Cards / Callouts ─────────────────────────────────────── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      margin: 16px 0;
+    }
+
+    .callout {
+      border-left: 3px solid var(--accent);
+      background: rgba(88,166,255,.07);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      padding: 14px 18px;
+      margin: 16px 0;
+      color: var(--text);
+      font-size: .9rem;
+    }
+
+    .callout.tip    { border-color: var(--green);  background: rgba(63,185,80,.07); }
+    .callout.warn   { border-color: var(--orange); background: rgba(255,166,87,.07); }
+    .callout.gold   { border-color: var(--gold);   background: rgba(255,224,102,.07); }
+
+    .callout strong { display: block; margin-bottom: 4px; font-size: .8rem; text-transform: uppercase; letter-spacing: .5px; }
+    .callout.tip    strong { color: var(--green); }
+    .callout.warn   strong { color: var(--orange); }
+    .callout        strong { color: var(--accent2); }
+    .callout.gold   strong { color: var(--gold); }
+
+    /* ── Tables ───────────────────────────────────────────────── */
+    .table-wrap { overflow-x: auto; margin: 16px 0; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .88rem;
+    }
+
+    thead th {
+      background: rgba(255,255,255,.04);
+      color: var(--muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      font-size: .75rem;
+      padding: 10px 14px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    tbody td {
+      padding: 10px 14px;
+      border-bottom: 1px solid rgba(45,55,72,.6);
+      vertical-align: top;
+    }
+
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: rgba(255,255,255,.025); }
+
+    .key {
+      display: inline-block;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-bottom-width: 2px;
+      border-radius: 4px;
+      padding: 1px 7px;
+      font-family: "Cascadia Code", "Fira Code", "Consolas", monospace;
+      font-size: .8rem;
+      color: var(--accent2);
+      white-space: nowrap;
+    }
+
+    code {
+      font-family: "Cascadia Code", "Fira Code", "Consolas", monospace;
+      font-size: .85em;
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1px 6px;
+      color: var(--gold);
+    }
+
+    /* ── Machine Grid ─────────────────────────────────────────── */
+    .machine-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 14px;
+      margin: 16px 0;
+    }
+
+    .machine-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      transition: border-color .2s;
+    }
+
+    .machine-card:hover { border-color: var(--accent); }
+
+    .machine-card .mc-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .machine-card .glyph {
+      width: 38px; height: 38px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .glyph-blue   { background: rgba(88,166,255,.2);  color: var(--accent2); }
+    .glyph-green  { background: rgba(63,185,80,.2);   color: var(--green);  }
+    .glyph-gold   { background: rgba(255,224,102,.2); color: var(--gold);   }
+    .glyph-purple { background: rgba(188,140,255,.2); color: var(--purple); }
+    .glyph-orange { background: rgba(255,166,87,.2);  color: var(--orange); }
+    .glyph-red    { background: rgba(248,81,73,.2);   color: var(--red);    }
+
+    .machine-card .mc-name { font-weight: 700; font-size: .95rem; }
+    .machine-card .mc-unlock { font-size: .75rem; color: var(--muted); }
+    .machine-card p { font-size: .83rem; color: var(--muted); margin: 0; }
+
+    .machine-card .mc-stats {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .stat-pill {
+      font-size: .72rem;
+      padding: 2px 8px;
+      border-radius: 10px;
+      background: rgba(255,255,255,.06);
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+
+    /* ── Objective ladder ─────────────────────────────────────── */
+    .obj-ladder {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+      gap: 8px;
+      margin: 16px 0;
+    }
+
+    .obj-cell {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 6px;
+      text-align: center;
+      font-size: .8rem;
+    }
+
+    .obj-cell .lvl { font-size: .65rem; color: var(--muted); }
+    .obj-cell .val { font-weight: 700; color: var(--accent2); }
+
+    /* ── Unlock timeline ──────────────────────────────────────── */
+    .timeline {
+      position: relative;
+      padding-left: 28px;
+      margin: 16px 0;
+    }
+
+    .timeline::before {
+      content: "";
+      position: absolute;
+      left: 7px; top: 6px; bottom: 6px;
+      width: 2px;
+      background: var(--border);
+    }
+
+    .tl-item {
+      position: relative;
+      margin-bottom: 16px;
+    }
+
+    .tl-item::before {
+      content: "";
+      position: absolute;
+      left: -24px; top: 6px;
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: 2px solid var(--bg);
+    }
+
+    .tl-item .tl-level {
+      font-size: .7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--accent);
+      letter-spacing: .5px;
+      margin-bottom: 2px;
+    }
+
+    .tl-item .tl-text {
+      font-size: .88rem;
+      color: var(--text);
+    }
+
+    .tl-item.tl-gold::before { background: var(--gold); }
+    .tl-item.tl-gold .tl-level { color: var(--gold); }
+    .tl-item.tl-green::before { background: var(--green); }
+    .tl-item.tl-green .tl-level { color: var(--green); }
+
+    /* ── Controls grid ────────────────────────────────────────── */
+    .ctrl-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin: 16px 0;
+    }
+
+    @media (max-width: 700px) {
+      .ctrl-grid { grid-template-columns: 1fr; }
+    }
+
+    .ctrl-group { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; }
+    .ctrl-group h4 { margin-top: 0; }
+    .ctrl-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid rgba(45,55,72,.5); font-size: .87rem; }
+    .ctrl-row:last-child { border-bottom: none; }
+    .ctrl-action { color: var(--muted); }
+
+    /* ── Upgrade table ────────────────────────────────────────── */
+    .upg-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      margin: 12px 0;
+    }
+
+    .upg-card h3 { margin-top: 0; }
+
+    .tier-row {
+      display: flex;
+      gap: 10px;
+      align-items: stretch;
+      margin: 10px 0;
+    }
+
+    .tier-box {
+      flex: 1;
+      background: rgba(255,255,255,.04);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px;
+      text-align: center;
+    }
+
+    .tier-box .tier-label { font-size: .7rem; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+    .tier-box .tier-val   { font-size: 1.1rem; font-weight: 700; color: var(--accent2); margin: 4px 0; }
+    .tier-box .tier-cost  { font-size: .78rem; color: var(--gold); }
+
+    /* ── Scrollbar styling ───────────────────────────────────── */
+    ::-webkit-scrollbar       { width: 7px; }
+    ::-webkit-scrollbar-track { background: var(--surface); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #4a5568; }
+
+    /* ── Footer ───────────────────────────────────────────────── */
+    footer {
+      margin-top: 40px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+      font-size: .8rem;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+<div class="page-wrap">
+
+  <!-- ════════════════════ SIDEBAR ════════════════════ -->
+  <nav class="sidebar">
+    <div class="logo">
+      <h1>BittsMatic</h1>
+      <span>User Manual</span>
+    </div>
+
+    <div class="section-label">Getting Started</div>
+    <ul>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#quickstart">Quick Start</a></li>
+      <li><a href="#ui">Interface Tour</a></li>
+    </ul>
+
+    <div class="section-label">Gameplay</div>
+    <ul>
+      <li><a href="#controls">Controls</a></li>
+      <li><a href="#machines">Machines</a></li>
+      <li><a href="#belts">Belts &amp; Bridges</a></li>
+      <li><a href="#objectives">Objectives</a></li>
+      <li><a href="#progression">Progression &amp; Unlocks</a></li>
+    </ul>
+
+    <div class="section-label">Systems</div>
+    <ul>
+      <li><a href="#upgrades">Upgrades</a></li>
+      <li><a href="#blueprints">Blueprints</a></li>
+      <li><a href="#markers">Markers</a></li>
+      <li><a href="#stats">Statistics</a></li>
+    </ul>
+
+    <div class="section-label">Reference</div>
+    <ul>
+      <li><a href="#tips">Tips &amp; Strategies</a></li>
+      <li><a href="#level1tip" style="padding-left:24px;">↳ Completing Level 1</a></li>
+      <li><a href="#hotkeys">Hotkey Reference</a></li>
+    </ul>
+  </nav>
+
+  <!-- ════════════════════ MAIN ════════════════════ -->
+  <main>
+
+    <!-- HERO -->
+    <div class="hero">
+      <h1>Bits<span>Matic</span></h1>
+      <p>A browser-based factory automation puzzle game. Route numbers through conveyor belts and math machines to feed the CORE the exact value it demands.</p>
+      <div class="badge-row">
+        <span class="badge badge-blue">30 Levels</span>
+        <span class="badge badge-gold">10 Machine Types</span>
+        <span class="badge badge-green">Upgrade System</span>
+        <span class="badge badge-purple">Blueprint Copy/Paste</span>
+      </div>
+    </div>
+
+    <!-- ── OVERVIEW ──────────────────────────────────── -->
+    <section id="overview">
+      <h2><span class="section-icon">🎯</span>Overview</h2>
+      <p>BittsMatic is a factory-building puzzle game where numbers are the product. Your factory sits on a 150×150 grid. Resource nodes on the grid emit raw numbers; you build conveyor belts to route those numbers through mathematical machines — Add, Multiply, Divide, and more — to transform them into the exact target value demanded by the <strong>CORE</strong>.</p>
+      <p>Deliver the correct value to the CORE to complete the current objective, earn upgrade points, and unlock new machines. All 30 objectives must be completed in sequence to finish the game.</p>
+
+      <div class="callout">
+        <strong>Core Loop</strong>
+        Extract numbers from nodes → Route along belts → Transform with math machines → Deliver to the CORE → Advance to the next objective.
+      </div>
+    </section>
+
+    <!-- ── QUICK START ────────────────────────────────── -->
+    <section id="quickstart">
+      <h2><span class="section-icon">🚀</span>Quick Start</h2>
+
+      <h3>Your First Factory</h3>
+      <p>Here is the fastest path from an empty grid to your first CORE delivery:</p>
+
+      <div class="card">
+        <ol style="padding-left:1.4rem; line-height:2.1;">
+          <li>Press <span class="key">2</span> to select the <strong>Extractor</strong> tool and click a <em>resource node</em> (pulsing circle on the grid) to place one.</li>
+          <li>Press <span class="key">1</span> to select the <strong>Belt</strong> tool. Left-click and drag from the Extractor toward the CORE (the large 3×3 machine at the center) to draw a belt line.</li>
+          <li>Numbers should now flow from the node along your belt. Watch the items (small colored squares) travel toward the CORE.</li>
+          <li>The first objective target is <strong>1</strong>. Each node emits 1 by default — deliver it directly to complete level 1.</li>
+          <li>Complete the delivery to earn your first upgrade point and advance to level 2.</li>
+        </ol>
+      </div>
+
+      <div class="callout tip">
+        <strong>Tip</strong>
+        Right-click any placed machine or belt to rotate its output direction. Rotation determines which direction items will leave the machine.
+      </div>
+    </section>
+
+    <!-- ── INTERFACE TOUR ─────────────────────────────── -->
+    <section id="ui">
+      <h2><span class="section-icon">🖥️</span>Interface Tour</h2>
+
+      <h3>Objective Banner</h3>
+      <p>Shown at the top of the screen. Displays the current level number and the exact value you must deliver to the CORE. Targets are randomized ±20% around a base sequence each game, so every playthrough is slightly different.</p>
+
+      <h3>Toolbar</h3>
+      <p>Lists all currently unlocked tools. Click a button or press its hotkey (<span class="key">1</span>–<span class="key">0</span>) to select it. The active tool is highlighted. New tools appear here automatically when you reach their unlock level.</p>
+
+      <h3>Inventory</h3>
+      <p>Shows every unique number value you have delivered to the CORE so far, along with a delivery count per value. Useful for tracking your throughput and resource variety.</p>
+
+      <h3>Milestones</h3>
+      <p>A list of upcoming machine unlocks with their required level. Locked entries are greyed out; completed ones are checked. Use this to plan ahead which machines you will have available soon.</p>
+
+      <h3>Upgrades</h3>
+      <p>Displays your current upgrade point balance and all purchasable upgrades. Shows each upgrade's current tier, cost to advance, and the level required to purchase. Greyed-out upgrades are either unaffordable or level-locked.</p>
+
+      <h3>Blueprint Status</h3>
+      <p>When a region has been copied, the panel shows the entity count and dimensions of the clipboard. During paste mode it shows that paste is active.</p>
+    </section>
+
+    <!-- ── CONTROLS ───────────────────────────────────── -->
+    <section id="controls">
+      <h2><span class="section-icon">⌨️</span>Controls</h2>
+
+      <div class="ctrl-grid">
+
+        <div class="ctrl-group">
+          <h4>Mouse</h4>
+          <div class="ctrl-row"><span>Place / draw belt</span><span class="ctrl-action"><span class="key">LMB</span> or drag</span></div>
+          <div class="ctrl-row"><span>Rotate machine/tool</span><span class="ctrl-action"><span class="key">RMB</span></span></div>
+          <div class="ctrl-row"><span>Pan view</span><span class="ctrl-action"><span class="key">Shift</span>+drag or <span class="key">MMB</span></span></div>
+          <div class="ctrl-row"><span>Zoom</span><span class="ctrl-action">Scroll wheel</span></div>
+          <div class="ctrl-row"><span>Rectangle select</span><span class="ctrl-action"><span class="key">Ctrl</span>+drag</span></div>
+          <div class="ctrl-row"><span>Cycle belt priority</span><span class="ctrl-action">Click existing belt</span></div>
+        </div>
+
+        <div class="ctrl-group">
+          <h4>Keyboard</h4>
+          <div class="ctrl-row"><span>Select tool</span><span class="ctrl-action"><span class="key">1</span>–<span class="key">0</span></span></div>
+          <div class="ctrl-row"><span>Rotate placement</span><span class="ctrl-action"><span class="key">R</span></span></div>
+          <div class="ctrl-row"><span>Copy selection</span><span class="ctrl-action"><span class="key">Ctrl</span>+<span class="key">C</span></span></div>
+          <div class="ctrl-row"><span>Cut selection</span><span class="ctrl-action"><span class="key">Ctrl</span>+<span class="key">X</span></span></div>
+          <div class="ctrl-row"><span>Paste blueprint</span><span class="ctrl-action"><span class="key">Ctrl</span>+<span class="key">V</span></span></div>
+          <div class="ctrl-row"><span>Rotate blueprint (paste)</span><span class="ctrl-action"><span class="key">R</span></span></div>
+          <div class="ctrl-row"><span>Demolish selection</span><span class="ctrl-action"><span class="key">D</span></span></div>
+          <div class="ctrl-row"><span>Clear items in selection</span><span class="ctrl-action"><span class="key">C</span></span></div>
+          <div class="ctrl-row"><span>Add text marker</span><span class="ctrl-action"><span class="key">B</span></span></div>
+          <div class="ctrl-row"><span>Cancel / exit mode</span><span class="ctrl-action"><span class="key">Esc</span></span></div>
+        </div>
+
+        <div class="ctrl-group">
+          <h4>Touch (Mobile)</h4>
+          <div class="ctrl-row"><span>Place item</span><span class="ctrl-action">Single tap</span></div>
+          <div class="ctrl-row"><span>Draw belt</span><span class="ctrl-action">Tap and drag</span></div>
+          <div class="ctrl-row"><span>Rotate</span><span class="ctrl-action">Long-press (400 ms)</span></div>
+          <div class="ctrl-row"><span>Pan view</span><span class="ctrl-action">Two-finger drag</span></div>
+          <div class="ctrl-row"><span>Zoom</span><span class="ctrl-action">Two-finger pinch</span></div>
+          <div class="ctrl-row"><span>Rotate tool</span><span class="ctrl-action">On-screen rotate button</span></div>
+        </div>
+
+        <div class="ctrl-group">
+          <h4>Camera</h4>
+          <div class="ctrl-row"><span>Zoom range</span><span class="ctrl-action">0.45× — 2.4×</span></div>
+          <div class="ctrl-row"><span>Zoom factor per tick</span><span class="ctrl-action">×1.12 / ×0.89</span></div>
+          <div class="ctrl-row"><span>Base tile size</span><span class="ctrl-action">32 px</span></div>
+          <div class="ctrl-row"><span>Canvas</span><span class="ctrl-action">Responsive, fills window</span></div>
+        </div>
+
+      </div>
+
+      <h3>Belt Priority Cycling</h3>
+      <p>When two belts converge on the same target tile, a <em>merge priority</em> controls which one takes precedence. Click an existing belt repeatedly to cycle through the priority states:</p>
+      <div class="callout">
+        <strong>Priority Cycle</strong>
+        None (equal chance) → Prefer Left → Prefer Right → None
+      </div>
+    </section>
+
+    <!-- ── MACHINES ───────────────────────────────────── -->
+    <section id="machines">
+      <h2><span class="section-icon">⚙️</span>Machines</h2>
+
+      <h3>Transport &amp; Source</h3>
+      <div class="machine-grid">
+
+        <div class="machine-card">
+          <div class="mc-head">
+            <div class="glyph glyph-blue">&gt;</div>
+            <div>
+              <div class="mc-name">Belt</div>
+              <div class="mc-unlock">Unlocked from start · Hotkey <span class="key">1</span></div>
+            </div>
+          </div>
+          <p>The fundamental transport tile. Carries one item at a time in a single direction. Left-click drag to draw continuous belt runs. Belts crossing perpendicularly auto-upgrade into Bridges.</p>
+          <div class="mc-stats">
+            <span class="stat-pill">1×1</span>
+            <span class="stat-pill">1 item</span>
+            <span class="stat-pill">Directional</span>
+          </div>
+        </div>
+
+        <div class="machine-card">
+          <div class="mc-head">
+            <div class="glyph glyph-green">S</div>
+            <div>
+              <div class="mc-name">Source</div>
+              <div class="mc-unlock">Unlocked from start</div>
+            </div>
+          </div>
+          <p>Continuously emits items with value <strong>10</strong> at a fixed interval. Useful for fixed-value inputs. Its output direction can be rotated to point in any of the four cardinal directions.</p>
+          <div class="mc-stats">
+            <span class="stat-pill">1×1</span>
+            <span class="stat-pill">Value: 10</span>
+            <span class="stat-pill">Interval: 2 ticks</span>
+          </div>
+        </div>
+
+        <div class="machine-card">
+          <div class="mc-head">
+            <div class="glyph glyph-orange">⛏</div>
+            <div>
+              <div class="mc-name">Extractor</div>
+              <div class="mc-unlock">Unlocked from start · Hotkey <span class="key">2</span></div>
+            </div>
+          </div>
+          <p>Must be placed on a <em>resource node</em> (the pulsing circles on the grid). Extracts 1-valued items from the node at a configurable rate. Affected by the Extractor Speed upgrade.</p>
+          <div class="mc-stats">
+            <span class="stat-pill">1×1</span>
+            <span class="stat-pill">Nodes only</span>
+            <span class="stat-pill">Value: 1</span>
+            <span class="stat-pill">Interval: 2 ticks</span>
+          </div>
+        </div>
+
+        <div class="machine-card">
+          <div class="mc-head">
+            <div class="glyph glyph-purple">[ ]</div>
+            <div>
+              <div class="mc-name">Storage</div>
+              <div class="mc-unlock">Level 22 · Hotkey <span class="key">0</span></div>
+            </div>
+          </div>
+          <p>Accepts items from all four sides simultaneously and buffers up to 1,000 items in a FIFO queue. Emits one item per tick from its single output direction. Great for evening out flow irregularities.</p>
+          <div class="mc-stats">
+            <span class="stat-pill">1×1</span>
+            <span class="stat-pill">4 inputs</span>
+            <span class="stat-pill">Capacity: 1 000</span>
+            <span class="stat-pill">FIFO</span>
+          </div>
+        </div>
+
+      </div>
+
+      <h3>Math Machines</h3>
+      <p>All math machines share the same basic design: a <strong>1×2 footprint</strong> (vertical by default, horizontal via blueprint rotation) with two input slots — <strong>A</strong> (top/left) and <strong>B</strong> (bottom/right) — and a single configurable output direction. Both slots must contain an item before processing begins. Processing takes <strong>2 ticks</strong>.</p>
+
+      <div class="callout">
+        <strong>Slot Orientation</strong>
+        Vertical layout: top tile = A, bottom tile = B. Horizontal layout: left tile = B, right tile = A. Items arrive on the belt facing the respective port.
+      </div>
+
+      <div class="machine-grid">
+
+        <div class="machine-card">
+          <div class="mc-head">
+            <div class="glyph glyph-green">+</div>
+            <div>
+              <div class="mc-name">Add</div>
+              <div class="mc-unlock">Level 1 · Hotkey <span class="key">3</span></div>
+            </div>
+          </div>
+          <p>Computes <code>A + B</code>. The first math machine you unlock — essential for building up larger values from small extracted numbers.</p>
+          <div class="mc-stats"><span class="stat-pill">1×2</span><span class="stat-pill">Output: A+B</span><span class="stat-pill">2 ticks</span></div>
+        </div>
+
+        <div class="machine-card">
+          <div class="mc-head">
+            <div class="glyph glyph-red">−</div>
+            <div>
+              <div class="mc-name">Subtract</div>
+              <div class="mc-unlock">Level 13 · Hotkey <span class="key">4</span></div>
+            </div>
+          </div>
+          <p>Computes <code>A − B</code>. Use to reduce values or extract specific differences. Negative results are valid items.</p>
+          <div class="mc-stats"><span class="stat-pill">1×2</span><span class="stat-pill">Output: A−B</span><span class="stat-pill">2 ticks</span></div>
+        </div>
+
+        <div class="machine-card">
+          <div class="mc-head">
+            <div class="glyph glyph-gold">×</div>
+            <div>
+              <div class="mc-name">Multiply</div>
+              <div class="mc-unlock">Level 7 · Hotkey <span class="key">5</span></div>
+            </div>
+          </div>
+          <p>Computes <code>A × B</code>. Powerful for reaching large target values quickly. Combine with an Extractor chain to scale numbers exponentially.</p>
+          <div class="mc-stats"><span class="stat-pill">1×2</span><span class="stat-pill">Output: A×B</span><span class="stat-pill">2 ticks</span></div>
+        </div>
+
+        <div class="machine-card">
+          <div class="mc-head">
+            <div class="glyph glyph-orange">÷</div>
+            <div>
+              <div class="mc-name">Divide</div>
+              <div class="mc-unlock">Level 16 · Hotkey <span class="key">6</span></div>
+            </div>
+          </div>
+          <p>Computes <code>floor(A ÷ B)</code> on the primary output and emits <code>A mod B</code> (the remainder) on a separate <em>secondary output</em> direction. Division by zero yields 0 on both outputs.</p>
+          <div class="mc-stats"><span class="stat-pill">1×2</span><span class="stat-pill">Primary: A÷B</span><span class="stat-pill">Secondary: A%B</span><span class="stat-pill">2 ticks</span></div>
+        </div>
+
+        <div class="machine-card">
+          <div class="mc-head">
+            <div class="glyph glyph-purple">Aᴮ</div>
+            <div>
+              <div class="mc-name">Exponentiate</div>
+              <div class="mc-unlock">Level 19 · Hotkey <span class="key">9</span></div>
+            </div>
+          </div>
+          <p>Computes <code>A ^ B</code>. Reaches astronomically large values in very few steps — ideal for the high-value targets in the final levels (e.g., 2048 = 2¹¹).</p>
+          <div class="mc-stats"><span class="stat-pill">1×2</span><span class="stat-pill">Output: A^B</span><span class="stat-pill">2 ticks</span></div>
+        </div>
+
+        <div class="machine-card">
+          <div class="mc-head">
+            <div class="glyph glyph-blue">⬡</div>
+            <div>
+              <div class="mc-name">CORE</div>
+              <div class="mc-unlock">Fixed — cannot be moved</div>
+            </div>
+          </div>
+          <p>The 3×3 delivery target. Accepts items from all four sides. If the delivered value matches the current objective, the level is completed. Wrong deliveries are counted but do not break progression.</p>
+          <div class="mc-stats"><span class="stat-pill">3×3</span><span class="stat-pill">4 inputs</span><span class="stat-pill">Fixed position</span></div>
+        </div>
+
+      </div>
+
+      <h3>Machine States</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>State</th><th>Meaning</th></tr></thead>
+          <tbody>
+            <tr><td><code>idle</code></td><td>Waiting for items to arrive in input slots, or for output to clear.</td></tr>
+            <tr><td><code>processing</code></td><td>Both inputs received — calculation or emission in progress (countdown ticks).</td></tr>
+            <tr><td><code>waiting</code></td><td>One input slot filled, the other is still empty.</td></tr>
+            <tr><td><code>blocked</code></td><td>Result is ready but the output belt or machine is occupied; machine cannot emit until space opens.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ── BELTS & BRIDGES ────────────────────────────── -->
+    <section id="belts">
+      <h2><span class="section-icon">🔁</span>Belts &amp; Bridges</h2>
+
+      <h3>Belt Basics</h3>
+      <p>Each belt tile holds <strong>one item</strong> at a time and carries it in a single direction. Items move along a normalized offset (0 = just arrived, 1 = ready to hand off). When an item reaches offset 1 it attempts to transfer to the next tile; if that tile is occupied or blocked the item waits.</p>
+
+      <h3>Bridges</h3>
+      <p>When you draw a belt that crosses an existing belt perpendicularly, the game <strong>automatically upgrades</strong> that intersection tile to a <em>Bridge</em> (unlocked at level 4). A Bridge is a two-layer tile: each layer independently carries items in its original direction without interference. Items on the horizontal layer and vertical layer never interact.</p>
+
+      <div class="callout tip">
+        <strong>Tip — Compact routing</strong>
+        You do not need to plan around intersections. Simply draw belts freely and bridges form wherever needed. This keeps factory layouts compact.
+      </div>
+
+      <h3>Belt Speed</h3>
+      <p>The global Belt Speed upgrade multiplier is applied to all belts simultaneously. A higher tier means items travel faster, increasing the throughput of your whole factory without requiring more machines.</p>
+    </section>
+
+    <!-- ── OBJECTIVES ─────────────────────────────────── -->
+    <section id="objectives">
+      <h2><span class="section-icon">🏁</span>Objectives</h2>
+
+      <p>There are <strong>30 objectives</strong> in total, completed in sequence. Each objective requires you to deliver a specific integer value to the CORE. The base target sequence is listed below, but the actual targets in your game are <em>randomized ±20%</em> from these values (seeded per playthrough), so treat these as approximate guides.</p>
+
+      <div class="obj-ladder">
+        <div class="obj-cell"><div class="lvl">Lv 1</div><div class="val">1</div></div>
+        <div class="obj-cell"><div class="lvl">Lv 2</div><div class="val">2</div></div>
+        <div class="obj-cell"><div class="lvl">Lv 3</div><div class="val">3</div></div>
+        <div class="obj-cell"><div class="lvl">Lv 4</div><div class="val">4</div></div>
+        <div class="obj-cell"><div class="lvl">Lv 5</div><div class="val">5</div></div>
+        <div class="obj-cell"><div class="lvl">Lv 6</div><div class="val">7</div></div>
+        <div class="obj-cell"><div class="lvl">Lv 7</div><div class="val">9</div></div>
+        <div class="obj-cell"><div class="lvl">Lv 8</div><div class="val">12</div></div>
+        <div class="obj-cell"><div class="lvl">Lv 9</div><div class="val">16</div></div>
+        <div class="obj-cell"><div class="lvl">Lv 10</div><div class="val">20</div></div>
+        <div class="obj-cell"><div class="lvl">Lv 11</div><div class="val">25</div></div>
+        <div class="obj-cell"><div class="lvl">Lv 12</div><div class="val">32</div></div>
+        <div class="obj-cell"><div class="lvl">Lv 13</div><div class="val">40</div></div>
+        <div class="obj-cell"><div class="lvl">Lv 14</div><div class="val">50</div></div>
+        <div class="obj-cell"><div class="lvl">Lv 15</div><div class="val">64</div></div>
+        <div class="obj-cell"><div class="lvl">Lv 16</div><div class="val">80</div></div>
+        <div class="obj-cell"><div class="lvl">Lv 17</div><div class="val">100</div></div>
+        <div class="obj-cell"><div class="lvl">Lv 18</div><div class="val">128</div></div>
+        <div class="obj-cell"><div class="lvl">Lv 19</div><div class="val">160</div></div>
+        <div class="obj-cell"><div class="lvl">Lv 20</div><div class="val">200</div></div>
+        <div class="obj-cell"><div class="lvl">Lv 21</div><div class="val">256</div></div>
+        <div class="obj-cell"><div class="lvl">Lv 22</div><div class="val">320</div></div>
+        <div class="obj-cell"><div class="lvl">Lv 23</div><div class="val">400</div></div>
+        <div class="obj-cell"><div class="lvl">Lv 24</div><div class="val">512</div></div>
+        <div class="obj-cell"><div class="lvl">Lv 25</div><div class="val">625</div></div>
+        <div class="obj-cell"><div class="lvl">Lv 26</div><div class="val">729</div></div>
+        <div class="obj-cell"><div class="lvl">Lv 27</div><div class="val">900</div></div>
+        <div class="obj-cell"><div class="lvl">Lv 28</div><div class="val">1 024</div></div>
+        <div class="obj-cell"><div class="lvl">Lv 29</div><div class="val">1 296</div></div>
+        <div class="obj-cell"><div class="lvl">Lv 30</div><div class="val">2 048</div></div>
+      </div>
+
+      <div class="callout warn">
+        <strong>Wrong Deliveries</strong>
+        Sending an incorrect value to the CORE does not end your run, but the <em>wrong deliveries</em> counter increments. There is no penalty beyond the count — clean playthroughs aim for zero wrong deliveries.
+      </div>
+    </section>
+
+    <!-- ── PROGRESSION & UNLOCKS ──────────────────────── -->
+    <section id="progression">
+      <h2><span class="section-icon">📈</span>Progression &amp; Unlocks</h2>
+
+      <p>Each completed objective advances you one level and grants <strong>1 upgrade point</strong>. New machines and systems unlock at specific levels:</p>
+
+      <div class="timeline">
+        <div class="tl-item tl-green">
+          <div class="tl-level">Start</div>
+          <div class="tl-text">Belt, Extractor, Source, Remove, Select tools available.</div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-level">Level 1</div>
+          <div class="tl-text"><strong>Add</strong> machine unlocked.</div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-level">Level 4</div>
+          <div class="tl-text"><strong>Bridge</strong> crossing unlocked — perpendicular belts now auto-upgrade to bridges.</div>
+        </div>
+        <div class="tl-item tl-gold">
+          <div class="tl-level">Level 5</div>
+          <div class="tl-text"><strong>Extractor Speed</strong> upgrade becomes available in the shop.</div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-level">Level 7</div>
+          <div class="tl-text"><strong>Multiply</strong> machine unlocked.</div>
+        </div>
+        <div class="tl-item tl-gold">
+          <div class="tl-level">Level 10</div>
+          <div class="tl-text"><strong>Belt Speed</strong> upgrade becomes available in the shop.</div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-level">Level 13</div>
+          <div class="tl-text"><strong>Subtract</strong> machine unlocked.</div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-level">Level 16</div>
+          <div class="tl-text"><strong>Divide</strong> machine unlocked (with remainder secondary output).</div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-level">Level 19</div>
+          <div class="tl-text"><strong>Exponentiate</strong> machine unlocked.</div>
+        </div>
+        <div class="tl-item tl-green">
+          <div class="tl-level">Level 22</div>
+          <div class="tl-text"><strong>Storage</strong> machine unlocked.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── UPGRADES ───────────────────────────────────── -->
+    <section id="upgrades">
+      <h2><span class="section-icon">⬆️</span>Upgrades</h2>
+
+      <p>Upgrade points are earned one per completed objective. Spend them in the Upgrades panel to increase factory throughput. Each upgrade has three tiers.</p>
+
+      <div class="upg-card">
+        <h3>Extractor Speed</h3>
+        <p style="color:var(--muted); font-size:.88rem; margin-bottom:14px;">Requires level 5 · Reduces the tick interval between extractions from all Extractors.</p>
+        <div class="tier-row">
+          <div class="tier-box"><div class="tier-label">Base</div><div class="tier-val">1.0×</div><div class="tier-cost">—</div></div>
+          <div class="tier-box"><div class="tier-label">Tier 1</div><div class="tier-val">1.5×</div><div class="tier-cost">10 pts</div></div>
+          <div class="tier-box"><div class="tier-label">Tier 2</div><div class="tier-val">2.0×</div><div class="tier-cost">30 pts</div></div>
+          <div class="tier-box"><div class="tier-label">Tier 3</div><div class="tier-val">2.5×</div><div class="tier-cost">75 pts</div></div>
+        </div>
+      </div>
+
+      <div class="upg-card">
+        <h3>Belt Speed</h3>
+        <p style="color:var(--muted); font-size:.88rem; margin-bottom:14px;">Requires level 10 · Increases the movement speed of all items across all belts and bridges.</p>
+        <div class="tier-row">
+          <div class="tier-box"><div class="tier-label">Base</div><div class="tier-val">2.0×</div><div class="tier-cost">—</div></div>
+          <div class="tier-box"><div class="tier-label">Tier 1</div><div class="tier-val">2.5×</div><div class="tier-cost">15 pts</div></div>
+          <div class="tier-box"><div class="tier-label">Tier 2</div><div class="tier-val">3.0×</div><div class="tier-cost">50 pts</div></div>
+          <div class="tier-box"><div class="tier-label">Tier 3</div><div class="tier-val">4.0×</div><div class="tier-cost">120 pts</div></div>
+        </div>
+      </div>
+
+      <div class="callout tip">
+        <strong>Spending Priority</strong>
+        Belt Speed has a higher ceiling multiplier (4×) and applies everywhere; buy Extractor Speed first when points are tight, then invest heavily in Belt Speed once level 10 is reached.
+      </div>
+    </section>
+
+    <!-- ── BLUEPRINTS ─────────────────────────────────── -->
+    <section id="blueprints">
+      <h2><span class="section-icon">📋</span>Blueprints</h2>
+
+      <p>Blueprints let you copy a region of your factory and paste it anywhere — including a rotated version. This is essential for duplicating proven sub-factories.</p>
+
+      <h3>Workflow</h3>
+      <div class="card">
+        <ol style="padding-left:1.4rem; line-height:2.2;">
+          <li>Press <span class="key">8</span> or <span class="key">Ctrl</span>+drag to activate the Select tool, then drag over the region you want to copy.</li>
+          <li>Press <span class="key">Ctrl</span>+<span class="key">C</span> to copy or <span class="key">Ctrl</span>+<span class="key">X</span> to cut. The Blueprint Status panel confirms the copy (entity count and dimensions).</li>
+          <li>Press <span class="key">Ctrl</span>+<span class="key">V</span> to enter paste mode. A translucent preview follows your cursor.</li>
+          <li>Optionally press <span class="key">R</span> to rotate the blueprint 90° before placing. Belt directions and machine orientations rotate automatically.</li>
+          <li>Click to stamp the blueprint at the desired location. Press <span class="key">Esc</span> to cancel.</li>
+        </ol>
+      </div>
+
+      <h3>What Is Captured</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Element</th><th>Captured?</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td>Belts</td><td>Yes</td><td>Direction and relative position preserved.</td></tr>
+            <tr><td>Bridges</td><td>Yes</td><td>Both layers serialized as separate belt entries.</td></tr>
+            <tr><td>Math machines</td><td>Yes</td><td>Type, orientation, output direction, port assignments.</td></tr>
+            <tr><td>Storage</td><td>Yes</td><td>Configuration only; buffered items are not copied.</td></tr>
+            <tr><td>Extractor / Source</td><td>Yes</td><td>Settings copied; Extractor paste to non-node positions may be blocked.</td></tr>
+            <tr><td>CORE</td><td>No</td><td>The CORE is fixed and is always excluded from blueprints.</td></tr>
+            <tr><td>Markers</td><td>No</td><td>Text annotations are not included in blueprint copies.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout warn">
+        <strong>Paste Validation</strong>
+        A blueprint cannot be placed if any required tile is already occupied by an incompatible machine. An invalid location shows the preview in red. Bridge auto-creation still applies during paste.
+      </div>
+    </section>
+
+    <!-- ── MARKERS ────────────────────────────────────── -->
+    <section id="markers">
+      <h2><span class="section-icon">🏷️</span>Markers</h2>
+
+      <p>Markers are text annotations you can pin anywhere on the grid to label factory regions, note target values, or leave reminders.</p>
+
+      <h3>Placing a Marker</h3>
+      <ol style="padding-left:1.4rem; line-height:2.1;">
+        <li>Select a region using the Select tool (<span class="key">8</span> or <span class="key">Ctrl</span>+drag).</li>
+        <li>Press <span class="key">B</span>. A dialog will appear asking for a text label (max 32 characters).</li>
+        <li>Type your label and confirm. The marker appears at the top-left corner of your selection, rendered in yellow (<code>#ffe066</code>) by default.</li>
+      </ol>
+
+      <p>Markers are saved with your game state and restored automatically on next load. They are <em>not</em> included in blueprint copies but they persist on the grid independently.</p>
+    </section>
+
+    <!-- ── STATISTICS ─────────────────────────────────── -->
+    <section id="stats">
+      <h2><span class="section-icon">📊</span>Statistics</h2>
+
+      <p>The game tracks real-time performance metrics for every machine using a 60-frame rolling window.</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Metric</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Throughput</strong></td><td>Average items produced per frame over the last 60 frames for a given machine.</td></tr>
+            <tr><td><strong>Efficiency</strong></td><td>Ratio of productive frames to total frames: <code>production / (production + blocked)</code>. A value of 1.0 means the machine never stalls.</td></tr>
+            <tr><td><strong>Core Deliveries</strong></td><td>Cumulative count of items accepted by the CORE (value matched the objective).</td></tr>
+            <tr><td><strong>Wrong Deliveries</strong></td><td>Cumulative count of items rejected by the CORE (value did not match).</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Viewing Stats</h3>
+      <p>Hover your mouse over any machine on the canvas. A tooltip appears above the machine showing its current <strong>throughput</strong> and <strong>efficiency</strong> values. Use this to identify bottlenecks: a machine with low efficiency is blocking frequently — either its input belts are undersupplied or its output is congested.</p>
+    </section>
+
+    <!-- ── TIPS ───────────────────────────────────────── -->
+    <section id="tips">
+      <h2><span class="section-icon">💡</span>Tips &amp; Strategies</h2>
+
+      <h3>Bonus Tip — Completing Level 1</h3>
+      <div id="level1tip" class="card" style="border-color: var(--gold); background: rgba(255,224,102,.05);">
+        <p style="margin-bottom:12px;">Level 1 asks for a value of <strong>1</strong> (±20%, so the target will be exactly <strong>1</strong> at the low end — and extractors emit <strong>1</strong> by default). This means you can complete it with the absolute minimum setup:</p>
+        <ol style="padding-left:1.4rem; line-height:2.2; color: var(--text);">
+          <li><strong>Find a resource node.</strong> Zoom out if needed (<span class="key">scroll</span> down) to spot the pulsing circles on the grid near the CORE.</li>
+          <li><strong>Place an Extractor.</strong> Press <span class="key">2</span>, then click the node. The Extractor immediately starts emitting value-1 items every 2 ticks.</li>
+          <li><strong>Draw a belt to the CORE.</strong> Press <span class="key">1</span>, then left-click and drag a continuous belt path from the Extractor's output toward any open side of the CORE (the large 3×3 machine). You do <em>not</em> need math machines for this level.</li>
+          <li><strong>Check the Extractor's output direction.</strong> If items are not flowing toward the CORE, right-click the Extractor to rotate it until its arrow points along your belt.</li>
+          <li><strong>Wait for delivery.</strong> A value-1 item will travel the belt and enter the CORE. The objective banner updates, a success toast appears, and you advance to level 2 with 1 upgrade point earned.</li>
+        </ol>
+        <div class="callout tip" style="margin-top:16px; margin-bottom:0;">
+          <strong>Common stumbling block</strong>
+          If nothing moves, the Extractor output arrow is pointing away from the belt. Right-click the Extractor once or twice until the arrow faces the first belt tile you placed. Items will start flowing immediately.
+        </div>
+      </div>
+
+      <h3>Early Game (Levels 1–6)</h3>
+      <ul style="padding-left:1.4rem; line-height:2.1;">
+        <li>Place extractors on every nearby node — even ones you do not immediately need. More inputs = more flexibility.</li>
+        <li>Use Add machines to double a stream: feed the same line into both A and B inputs via a split.</li>
+        <li>Deliver directly to the CORE for the early single-digit targets; machines are overhead you do not yet need.</li>
+      </ul>
+
+      <h3>Mid Game (Levels 7–18)</h3>
+      <ul style="padding-left:1.4rem; line-height:2.1;">
+        <li>Multiply unlocks at level 7 — immediately build a <code>1 × 1 = 1</code> chain then upgrade to <code>n × n</code> to reach targets like 64, 128.</li>
+        <li>Buy Extractor Speed at level 5 before anything else — it doubles production rate cheaply.</li>
+        <li>Use blueprints to duplicate your successful doubling chains rather than rebuilding from scratch.</li>
+        <li>Bridges let you route belts freely without rerouting. Cross lines liberally.</li>
+      </ul>
+
+      <h3>Late Game (Levels 19–30)</h3>
+      <ul style="padding-left:1.4rem; line-height:2.1;">
+        <li>Exponentiate is the key to targets like 2048 (<code>2^11</code>), 1296 (<code>6^4</code>), 729 (<code>3^6</code>). Plan the base and exponent streams carefully.</li>
+        <li>Storage machines smooth out timing mismatches between arms of a pipeline — particularly useful when one math chain is slower than another.</li>
+        <li>Divide's remainder output is a free by-product — route it somewhere useful rather than letting it block.</li>
+        <li>Belt Speed tier 3 (4×) combined with Extractor Speed tier 3 (2.5×) gives enormous throughput — buy these before tackling the high-value final objectives.</li>
+      </ul>
+
+      <div class="callout gold">
+        <strong>Power-of-two shortcut</strong>
+        Many late targets are powers of 2 (512, 1024, 2048). Chain three Multiply machines each doubling a stream to get ×8 amplification in three steps, or use Exponentiate with base 2 and exponent derived from your extractor chain.
+      </div>
+    </section>
+
+    <!-- ── HOTKEY REFERENCE ───────────────────────────── -->
+    <section id="hotkeys">
+      <h2><span class="section-icon">⌨️</span>Hotkey Reference</h2>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Key</th><th>Action</th><th>Notes</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><span class="key">1</span></td><td>Belt tool</td><td>Drag to draw continuous belt runs</td></tr>
+            <tr><td><span class="key">2</span></td><td>Extractor tool</td><td>Place on resource nodes only</td></tr>
+            <tr><td><span class="key">3</span></td><td>Add machine</td><td>Unlocks at level 1</td></tr>
+            <tr><td><span class="key">4</span></td><td>Subtract machine</td><td>Unlocks at level 13</td></tr>
+            <tr><td><span class="key">5</span></td><td>Multiply machine</td><td>Unlocks at level 7</td></tr>
+            <tr><td><span class="key">6</span></td><td>Divide machine</td><td>Unlocks at level 16; has secondary output</td></tr>
+            <tr><td><span class="key">7</span></td><td>Remove tool</td><td>Delete any placed tile</td></tr>
+            <tr><td><span class="key">8</span></td><td>Select tool</td><td>Drag to select a rectangle</td></tr>
+            <tr><td><span class="key">9</span></td><td>Exponentiate machine</td><td>Unlocks at level 19</td></tr>
+            <tr><td><span class="key">0</span></td><td>Storage machine</td><td>Unlocks at level 22</td></tr>
+            <tr><td><span class="key">R</span></td><td>Rotate</td><td>Rotate tool direction or blueprint</td></tr>
+            <tr><td><span class="key">B</span></td><td>Add Marker</td><td>Requires active selection</td></tr>
+            <tr><td><span class="key">D</span></td><td>Demolish selection</td><td>Removes all tiles in selected region</td></tr>
+            <tr><td><span class="key">C</span></td><td>Clear items</td><td>Removes items in flight from selection</td></tr>
+            <tr><td><span class="key">Ctrl</span>+<span class="key">C</span></td><td>Copy blueprint</td><td>Copies selected region to clipboard</td></tr>
+            <tr><td><span class="key">Ctrl</span>+<span class="key">X</span></td><td>Cut blueprint</td><td>Copies and removes selected region</td></tr>
+            <tr><td><span class="key">Ctrl</span>+<span class="key">V</span></td><td>Paste blueprint</td><td>Enter paste mode; click to stamp</td></tr>
+            <tr><td><span class="key">Esc</span></td><td>Cancel</td><td>Exit paste mode or blueprint preview</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <footer>
+      BittsMatic &mdash; User Manual &bull; Vanilla JS / Canvas 2D &bull; 30 levels &bull; No build step required
+    </footer>
+
+  </main>
+</div>
+
+<!-- Sidebar active-link tracking -->
+<script>
+  const links = document.querySelectorAll('nav.sidebar a');
+  const sections = document.querySelectorAll('main section[id], main .hero');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        links.forEach(l => l.classList.remove('active'));
+        const active = document.querySelector(`nav.sidebar a[href="#${entry.target.id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-30% 0px -60% 0px' });
+
+  document.querySelectorAll('main section[id]').forEach(s => observer.observe(s));
+</script>
+</body>
+</html>

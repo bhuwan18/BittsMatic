@@ -144,6 +144,30 @@ button {
   background: #102734;
   border-left: 1px solid rgba(102, 190, 231, 0.35);
   overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(102, 190, 231, 0.25) transparent;
+}
+
+.side-panel::-webkit-scrollbar {
+  width: 5px;
+}
+
+.side-panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.side-panel::-webkit-scrollbar-thumb {
+  background: rgba(102, 190, 231, 0.25);
+  border-radius: 3px;
+}
+
+.side-panel::-webkit-scrollbar-thumb:hover {
+  background: rgba(102, 190, 231, 0.45);
+}
+
+.side-panel > section {
+  border-top: 1px solid rgba(102, 190, 231, 0.1);
+  padding-top: 4px;
 }
 
 h1,
@@ -214,9 +238,15 @@ h2 {
   cursor: pointer;
 }
 
+.tool-button:not(:disabled):not([data-active="true"]):hover {
+  background: #112232;
+  border-color: #4fa3c8;
+}
+
 .tool-button[data-active="true"] {
   border-color: #f2c14e;
-  background: #173b4e;
+  background: #1d4a62;
+  box-shadow: inset 0 0 0 1px rgba(242, 193, 78, 0.15);
 }
 
 .tool-button:disabled {
@@ -274,6 +304,10 @@ h2 {
   cursor: not-allowed;
 }
 
+.blueprint-controls button:not(:disabled):hover {
+  border-color: #f2c14e;
+}
+
 .blueprint-status {
   margin-top: 8px;
   color: #9fb1bd;
@@ -313,6 +347,10 @@ h2 {
   border-color: #5d8f6f;
 }
 
+.milestone[data-unlocked="true"] span {
+  color: #7ee098;
+}
+
 .control-grid {
   grid-template-columns: 72px minmax(0, 1fr);
   color: #9fb1bd;
@@ -325,9 +363,26 @@ h2 {
 }
 
 .upgrade-points-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   margin-bottom: 8px;
   color: #9fb1bd;
   font-size: 13px;
+}
+
+.pts-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  padding: 1px 7px;
+  background: #1d4a62;
+  border: 1px solid #2e7da4;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #f2c14e;
 }
 
 .upgrade-shop {
@@ -408,6 +463,69 @@ h2 {
   border: 1px solid #4fa3c8;
   border-radius: 8px;
   cursor: pointer;
+}
+
+.help-btn {
+  position: absolute;
+  z-index: 2;
+  top: 14px;
+  right: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  font-size: 16px;
+  font-weight: 800;
+  color: #edf4f7;
+  background: #1b3a4a;
+  border: 1px solid #4fa3c8;
+  border-radius: 50%;
+  text-decoration: none;
+  opacity: 0.75;
+  transition: opacity 0.15s, border-color 0.15s;
+}
+
+.help-btn:hover {
+  opacity: 1;
+  border-color: #f2c14e;
+  color: #f2c14e;
+}
+
+.controls-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.section-toggle {
+  all: unset;
+  color: #6a8a96;
+  cursor: pointer;
+  font-size: 15px;
+  line-height: 1;
+  padding: 2px 0;
+  transition: color 0.15s, transform 0.2s;
+}
+
+.section-toggle:hover {
+  color: #b9c9cf;
+}
+
+.section-toggle[aria-expanded="false"] {
+  transform: rotate(-90deg);
+}
+
+.collapsible-content {
+  overflow: hidden;
+  transition: max-height 0.25s ease-in-out, opacity 0.2s;
+  max-height: 800px;
+  opacity: 1;
+}
+
+.collapsible-content.collapsed {
+  max-height: 0;
+  opacity: 0;
 }
 
 .touch-controls-hint {

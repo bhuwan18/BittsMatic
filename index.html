@@ -26,6 +26,7 @@
         <div class="success-toast" id="successToast" role="status">Objective complete</div>
         <canvas id="game" width="1152" height="864" aria-label="BittsMatic factory grid"></canvas>
         <button id="touch-rotate-btn" class="touch-rotate-btn" type="button" aria-label="Rotate placement direction">↻ Rotate</button>
+        <a href="manual.html" target="_blank" rel="noopener" class="help-btn" aria-label="Open user manual">?</a>
       </section>
       <aside class="side-panel">
         <div class="profile-row">
@@ -49,7 +50,7 @@
         </section>
 
         <section>
-          <h2>Inventory</h2>
+          <h2>Deliveries</h2>
           <div class="resource-list" id="resources"></div>
         </section>
 
@@ -65,25 +66,27 @@
         </section>
 
         <section>
-          <h2>Controls</h2>
-          <div class="control-grid">
-            <span>Place</span><strong>Left click / drag</strong>
-            <span>Rotate</span><strong>Right click or R</strong>
-            <span>Remove</span><strong>Pick delete tool</strong>
-            <span>Zoom</span><strong>Mouse wheel</strong>
-            <span>Pan</span><strong>Shift drag / middle drag</strong>
-            <span>Select</span><strong>Tool 8 / Ctrl drag</strong>
-            <span>Blueprint</span><strong>Ctrl C/X/V, Esc</strong>
-            <span>Demolish sel.</span><strong>D</strong>
-            <span>Clear items</span><strong>C</strong>
-            <span>Marker</span><strong>B</strong>
-            <span>Priority</span><strong>Click belt</strong>
-            <span>Tools</span><strong>1-9</strong>
+          <h2 class="controls-header">Controls <button class="section-toggle" id="controlsToggle" type="button" aria-expanded="false" aria-controls="controlsContent">▾</button></h2>
+          <div id="controlsContent" class="collapsible-content collapsed">
+            <div class="control-grid">
+              <span>Place</span><strong>Left click / drag</strong>
+              <span>Rotate</span><strong>Right click or R</strong>
+              <span>Remove</span><strong>Pick delete tool</strong>
+              <span>Zoom</span><strong>Mouse wheel</strong>
+              <span>Pan</span><strong>Shift drag / middle drag</strong>
+              <span>Select</span><strong>Tool 8 / Ctrl drag</strong>
+              <span>Blueprint</span><strong>Ctrl C/X/V, Esc</strong>
+              <span>Demolish sel.</span><strong>D</strong>
+              <span>Clear items</span><strong>C</strong>
+              <span>Marker</span><strong>B</strong>
+              <span>Priority</span><strong>Click belt</strong>
+              <span>Tools</span><strong>1-9</strong>
+            </div>
+            <p class="touch-controls-hint">
+              <strong>Touch:</strong> Tap to place · Drag to draw belts ·
+              Long-press to rotate · Two-finger drag to pan · Pinch to zoom
+            </p>
           </div>
-          <p class="touch-controls-hint">
-            <strong>Touch:</strong> Tap to place · Drag to draw belts ·
-            Long-press to rotate · Two-finger drag to pan · Pinch to zoom
-          </p>
         </section>
       </aside>
     </main>
