@@ -109,7 +109,7 @@ export class InputHandler {
     if (!point) return;
 
     if (this.pasteBlueprint) {
-      if (this.blueprints.paste(this.pasteBlueprint, point.x, point.y)) this.updateUi();
+      if (this.blueprints.paste(this.pasteBlueprint, point.x, point.y, this.progression.isUnlocked('bridge'))) this.updateUi();
       this.#updatePastePreview(point);
       return;
     }
@@ -235,7 +235,10 @@ export class InputHandler {
         // Allow placing a belt on a perpendicular belt — GridManager auto-upgrades to bridge
         if (this.selectedTool === "belt" && tile.kind === TileKind.Belt) {
           const existing = tile.entity.direction;
-          if (existing !== this.direction && existing !== OPPOSITE[this.direction]) continue;
+          if (existing !== this.direction && existing !== OPPOSITE[this.direction]) {
+            if (!this.progression.isUnlocked('bridge')) return false;
+            continue;
+          }
         }
         return false;
       }
@@ -336,7 +339,7 @@ export class InputHandler {
   }
 
   #updatePastePreview(point) {
-    const validation = this.blueprints.canPaste(this.pasteBlueprint, point.x, point.y);
+    const validation = this.blueprints.canPaste(this.pasteBlueprint, point.x, point.y, this.progression.isUnlocked('bridge'));
     this.renderer.blueprintPreview = {
       x: point.x,
       y: point.y,
@@ -479,7 +482,7 @@ export class InputHandler {
         const point = this.renderer.screenToGrid(touch.clientX, touch.clientY);
         if (point) {
           if (this.pasteBlueprint) {
-            if (this.blueprints.paste(this.pasteBlueprint, point.x, point.y)) this.updateUi();
+            if (this.blueprints.paste(this.pasteBlueprint, point.x, point.y, this.progression.isUnlocked('bridge'))) this.updateUi();
             this.#updatePastePreview(point);
           } else if (this.selectedTool === "belt") {
             const existing = this.grid.getBelt(point.x, point.y);

@@ -1,10 +1,9 @@
 // Level-gated machine unlocks matching Beltmatic's progression curve
 const LEVEL_UNLOCKS = {
-  1: ["add"],
-  4: ["bridge"],
-  7: ["multiply"],
-  13: ["subtract"],
-  16: ["divide"],
+  1: ["add", "subtract"],
+  4: ["multiply"],
+  10: ["divide"],
+  13: ["bridge"],
   19: ["exponentiate"],
   22: ["storage"]
 };

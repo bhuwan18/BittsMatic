@@ -52,19 +52,19 @@ export class BlueprintManager {
     return this.current;
   }
 
-  canPaste(blueprint = this.current, x, y) {
+  canPaste(blueprint = this.current, x, y, bridgeAllowed = true) {
     if (!blueprint) return { valid: false, invalidTiles: [] };
     const invalidTiles = [];
     const required = new Set();
 
     for (const belt of blueprint.belts) {
-      this.#collectTile(required, invalidTiles, x + belt.x, y + belt.y, belt.direction);
+      this.#collectTile(required, invalidTiles, x + belt.x, y + belt.y, belt.direction, bridgeAllowed);
     }
 
     for (const machine of blueprint.machines) {
       for (let yy = 0; yy < machine.height; yy += 1) {
         for (let xx = 0; xx < machine.width; xx += 1) {
-          this.#collectTile(required, invalidTiles, x + machine.x + xx, y + machine.y + yy);
+          this.#collectTile(required, invalidTiles, x + machine.x + xx, y + machine.y + yy, null, bridgeAllowed);
         }
       }
     }
@@ -72,8 +72,8 @@ export class BlueprintManager {
     return { valid: invalidTiles.length === 0, invalidTiles };
   }
 
-  paste(blueprint = this.current, x, y) {
-    if (!this.canPaste(blueprint, x, y).valid) return false;
+  paste(blueprint = this.current, x, y, bridgeAllowed = true) {
+    if (!this.canPaste(blueprint, x, y, bridgeAllowed).valid) return false;
 
     for (const belt of blueprint.belts) {
       const placed = this.grid.placeBelt(x + belt.x, y + belt.y, belt.direction);
@@ -123,7 +123,7 @@ export class BlueprintManager {
     return rotated;
   }
 
-  #collectTile(required, invalidTiles, x, y, beltDirection = null) {
+  #collectTile(required, invalidTiles, x, y, beltDirection = null, bridgeAllowed = true) {
     const key = `${x},${y}`;
     if (required.has(key)) return;
     required.add(key);
@@ -131,7 +131,7 @@ export class BlueprintManager {
     if (!tile) { invalidTiles.push({ x, y }); return; }
     if (tile.occupied) {
       // Allow pasting a belt over a perpendicular belt — placeBelt will auto-bridge
-      if (beltDirection !== null && tile.kind === TileKind.Belt) {
+      if (beltDirection !== null && bridgeAllowed && tile.kind === TileKind.Belt) {
         const existing = tile.entity.direction;
         if (existing !== beltDirection && existing !== OPPOSITE[beltDirection]) return;
       }
