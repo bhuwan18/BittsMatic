@@ -1,9 +1,9 @@
-import { Direction, OPPOSITE } from "../core/constants.js";
+import { Direction, OPPOSITE, rotateDirection } from "../core/constants.js";
 import { Item } from "./Item.js";
 
 let nextMachineId = 1;
 
-const MATH_TYPES = new Set(["add", "subtract", "multiply", "divide"]);
+const MATH_TYPES = new Set(["add", "subtract", "multiply", "divide", "exponentiate"]);
 
 export class Machine {
   constructor(config) {
@@ -16,6 +16,7 @@ export class Machine {
     this.orientation = config.orientation ?? "vertical";
     this.fixed = Boolean(config.fixed);
     this.output = config.output ?? Direction.Right;
+    this.secondaryOutput = config.secondaryOutput ?? null;
     this.inputPorts = [...(config.inputPorts ?? [])];
     this.operation = config.operation ?? config.type;
     this.processTicks = config.ticks ?? 2;
@@ -24,15 +25,22 @@ export class Machine {
     this.state = "idle";
     this.progress = 0;
     this.inputBuffers = new Map(this.inputPorts.map((direction) => [direction, null]));
+    this.pendingSecondaryOutput = null;
     this.storedValues = [];
     this.rejectedValues = [];
+    this.buffer = [];
+    this.maxBuffer = config.maxBuffer ?? 0;
   }
 
   static source({ x, y, output = Direction.Right, value = 10, interval = 2 }) {
     return new Machine({ type: "source", x, y, output, sourceValue: value, sourceInterval: interval });
   }
 
-  static math({ type, x, y, output = Direction.Right, ticks = 2, orientation = "vertical" }) {
+  static extractor({ x, y, output = Direction.Right, nodeValue = 1, interval = 2 }) {
+    return new Machine({ type: "extractor", x, y, output, sourceValue: nodeValue, sourceInterval: interval });
+  }
+
+  static math({ type, x, y, output = Direction.Right, ticks = 2, orientation = "vertical", secondaryOutput = null }) {
     if (!MATH_TYPES.has(type)) throw new Error(`Unknown math machine: ${type}`);
     return new Machine({
       type,
@@ -43,8 +51,22 @@ export class Machine {
       orientation,
       inputPorts: ["A", "B"],
       output,
+      secondaryOutput,
       operation: type,
       ticks
+    });
+  }
+
+  static storage({ x, y, output = Direction.Right }) {
+    return new Machine({
+      type: "storage",
+      x,
+      y,
+      width: 1,
+      height: 1,
+      output,
+      inputPorts: [Direction.Up, Direction.Down, Direction.Left, Direction.Right],
+      maxBuffer: 1000
     });
   }
 
@@ -65,6 +87,10 @@ export class Machine {
       const port = OPPOSITE[fromDirection];
       return this.inputBuffers.has(port) && !this.inputBuffers.get(port);
     }
+    if (this.type === "storage") {
+      const port = OPPOSITE[fromDirection];
+      return this.inputBuffers.has(port) && !this.inputBuffers.get(port) && this.buffer.length < this.maxBuffer;
+    }
     if (!MATH_TYPES.has(this.type)) return false;
     const slot = this.#slotForTarget(targetPosition);
     return Boolean(slot && !this.inputBuffers.get(slot));
@@ -72,6 +98,12 @@ export class Machine {
 
   acceptItem(fromDirection, item, targetPosition = null) {
     if (!this.canAcceptItem(fromDirection, item, targetPosition)) return false;
+    if (this.type === "storage") {
+      const port = OPPOSITE[fromDirection];
+      this.inputBuffers.set(port, item);
+      item.offset = 1;
+      return true;
+    }
     const port = this.type === "core" ? OPPOSITE[fromDirection] : this.#slotForTarget(targetPosition);
     this.inputBuffers.set(port, item);
     item.offset = 1;
@@ -79,12 +111,16 @@ export class Machine {
   }
 
   tick(context) {
-    if (this.type === "source") {
+    if (this.type === "source" || this.type === "extractor") {
       this.#tickSource(context);
       return;
     }
     if (this.type === "core") {
       this.#tickCore(context);
+      return;
+    }
+    if (this.type === "storage") {
+      this.#tickStorage(context);
       return;
     }
     if (MATH_TYPES.has(this.type)) {
@@ -94,7 +130,9 @@ export class Machine {
 
   #tickSource(context) {
     this.progress += 1;
-    if (this.progress < this.sourceInterval) {
+    const speedMult = (this.type === "extractor" ? (context.extractorSpeedMultiplier ?? 1) : 1);
+    const effectiveInterval = speedMult > 1 ? Math.max(1, Math.floor(this.sourceInterval / speedMult)) : this.sourceInterval;
+    if (this.progress < effectiveInterval) {
       this.state = "processing";
       return;
     }
@@ -111,6 +149,17 @@ export class Machine {
   }
 
   #tickMath(context) {
+    // Retry pending divide remainder (primary was already emitted, inputs cleared)
+    if (this.pendingSecondaryOutput) {
+      if (!context.emitSecondaryFromMachine?.(this, this.pendingSecondaryOutput)) {
+        this.state = "blocked";
+        return;
+      }
+      this.pendingSecondaryOutput = null;
+      this.state = "idle";
+      return;
+    }
+
     const readyInputs = this.#readyInputs();
     if (!readyInputs) {
       this.progress = 0;
@@ -136,11 +185,53 @@ export class Machine {
       return;
     }
 
-    for (const item of readyInputs) context.consumeItem?.(item);
-    this.inputBuffers.set("A", null);
-    this.inputBuffers.set("B", null);
-    this.progress = 0;
+    // Divide: emit remainder on secondary port; block if unavailable
+    if (this.type === "divide" && this.secondaryOutput) {
+      const [a, b] = readyInputs.map((item) => item.value);
+      const remainder = new Item(b === 0 ? 0 : a % b, {
+        operation: "divide-remainder",
+        sources: readyInputs.map((item) => item.id)
+      });
+      for (const item of readyInputs) context.consumeItem?.(item);
+      this.inputBuffers.set("A", null);
+      this.inputBuffers.set("B", null);
+      this.progress = 0;
+      if (!context.emitSecondaryFromMachine?.(this, remainder)) {
+        this.pendingSecondaryOutput = remainder;
+        this.state = "blocked";
+        return;
+      }
+    } else {
+      for (const item of readyInputs) context.consumeItem?.(item);
+      this.inputBuffers.set("A", null);
+      this.inputBuffers.set("B", null);
+      this.progress = 0;
+    }
+
     this.state = "idle";
+  }
+
+  #tickStorage(context) {
+    // Drain all direction-keyed input buffers into the FIFO queue
+    for (const [port, item] of this.inputBuffers.entries()) {
+      if (!item) continue;
+      if (this.buffer.length < this.maxBuffer) {
+        this.buffer.push(item.value);
+        context.consumeItem?.(item);
+        this.inputBuffers.set(port, null);
+      }
+    }
+
+    if (this.buffer.length === 0) { this.state = "idle"; return; }
+
+    // Emit the front item via the single output direction
+    const emitItem = new Item(this.buffer[0], { operation: "storage-emit" });
+    if (context.emitFromMachine(this, emitItem)) {
+      this.buffer.shift();
+      this.state = "processing";
+    } else {
+      this.state = "blocked";
+    }
   }
 
   #tickCore(context) {
@@ -175,7 +266,8 @@ export class Machine {
     if (this.operation === "add") return a + b;
     if (this.operation === "subtract") return a - b;
     if (this.operation === "multiply") return a * b;
-    if (this.operation === "divide") return b === 0 ? 0 : a / b;
+    if (this.operation === "divide") return b === 0 ? 0 : Math.floor(a / b);
+    if (this.operation === "exponentiate") return Math.pow(a, b);
     return a;
   }
 

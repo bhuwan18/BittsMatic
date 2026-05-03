@@ -7,6 +7,8 @@ import { Renderer } from "./rendering/Renderer.js";
 import { TOOLS } from "./config/recipes.js";
 import { AuthSession, profileFromGoogleCredential } from "./systems/AuthSession.js";
 import { Progression } from "./systems/Progression.js";
+import { MarkerManager } from "./systems/MarkerManager.js";
+import { StatsCollector } from "./systems/StatsCollector.js";
 
 const canvas = document.querySelector("#game");
 const toolbar = document.querySelector("#toolbar");
@@ -25,8 +27,12 @@ const objectiveText = document.querySelector("#objectiveText");
 const objectiveStatus = document.querySelector("#objectiveStatus");
 const objectiveBanner = document.querySelector("#objectiveBanner");
 const successToast = document.querySelector("#successToast");
+const upgradePointsLabel = document.querySelector("#upgradePointsLabel");
+const upgradeShop = document.querySelector("#upgradeShop");
 
 const auth = new AuthSession();
+const markers = new MarkerManager();
+const stats = new StatsCollector();
 let grid = null;
 let progression = null;
 let loop = null;
@@ -98,7 +104,7 @@ function renderGoogleButton() {
 }
 
 function startGame() {
-  grid = new GridManager(50, 50);
+  grid = new GridManager(150, 150);
   progression = new Progression({
     saveData: auth.loadProgress(),
     onChange: (state) => {
@@ -106,15 +112,21 @@ function startGame() {
       updateUi(false);
     }
   });
-  loop = new GameLoop(grid, { progression, tickRate: 1 });
+  loop = new GameLoop(grid, { progression, tickRate: 1, stats });
 
   const coreX = Math.floor(grid.width / 2) - 1;
   const coreY = Math.floor(grid.height / 2) - 1;
   const core = Machine.core({ x: coreX, y: coreY });
   grid.placeMachine(core);
 
-  renderer = new Renderer(canvas, grid, loop, progression);
-  input = new InputHandler(canvas, grid, renderer, progression, updateUi);
+  if (!progression.mapSeed) {
+    progression.mapSeed = (Date.now() ^ Math.floor(Math.random() * 0xFFFFFFFF)) >>> 0;
+  }
+  grid.generateNodes(progression.mapSeed, 80, coreX + 1, coreY + 1, 8);
+
+  renderer = new Renderer(canvas, grid, loop, progression, markers);
+  renderer.stats = stats;
+  input = new InputHandler(canvas, grid, renderer, progression, updateUi, markers);
   copyBlueprintButton.addEventListener("click", () => input.copySelection());
   pasteBlueprintButton.addEventListener("click", () => input.enterPasteMode());
   rotateBlueprintButton.addEventListener("click", () => input.rotatePasteBlueprint());
@@ -138,6 +150,7 @@ function updateUi(rebuildToolbar = true) {
   renderBlueprint();
   renderResources();
   renderMilestones();
+  renderUpgrades();
 }
 
 function renderToolbar() {
@@ -212,10 +225,54 @@ function renderMilestones() {
     const item = document.createElement("div");
     item.className = "milestone";
     item.dataset.unlocked = String(milestone.unlocked);
-    const requirements = Object.entries(milestone.requirements)
-      .map(([value, count]) => `${progression.count(value)}/${count} value ${value}`)
-      .join(", ");
-    item.innerHTML = `<strong>${milestone.label}</strong><span>${milestone.unlocked ? "Unlocked" : requirements}</span>`;
+    const status = milestone.unlocked
+      ? "Unlocked"
+      : `Unlocks at level ${milestone.requiredLevel}`;
+    item.innerHTML = `<strong>${milestone.label}</strong><span>${status}</span>`;
+    return item;
+  }));
+}
+
+function renderUpgrades() {
+  const pts = progression.upgradePoints;
+  upgradePointsLabel.textContent = `${pts} upgrade point${pts !== 1 ? "s" : ""} (earned per correct delivery)`;
+
+  upgradeShop.replaceChildren(...progression.availableUpgrades().map((upgrade) => {
+    const item = document.createElement("div");
+    item.className = "upgrade-item";
+    item.dataset.maxed = String(upgrade.maxed);
+    item.dataset.locked = String(!upgrade.unlocked);
+
+    const tierText = upgrade.maxed ? "MAX" : `Tier ${upgrade.tier}/${upgrade.maxTier}`;
+    const effectText = upgrade.id === "belt-speed"
+      ? `Belt speed: ${progression.beltSpeedMultiplier}×`
+      : `Extractor speed: ${progression.extractorSpeedMultiplier}×`;
+
+    const header = document.createElement("div");
+    header.className = "upgrade-item-header";
+    header.innerHTML = `<strong>${upgrade.label}</strong><span class="upgrade-tier">${tierText}</span>`;
+
+    const effect = document.createElement("div");
+    effect.className = "upgrade-effect";
+    effect.textContent = effectText;
+
+    item.append(header, effect);
+
+    if (!upgrade.maxed) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "upgrade-buy";
+      btn.textContent = upgrade.unlocked
+        ? `Upgrade — ${upgrade.cost} pts`
+        : `Unlocks at level ${upgrade.requiredLevel}`;
+      btn.disabled = !upgrade.canAfford || !upgrade.unlocked;
+      btn.addEventListener("click", () => {
+        progression.buyUpgrade(upgrade.id);
+        renderUpgrades();
+      });
+      item.append(btn);
+    }
+
     return item;
   }));
 }

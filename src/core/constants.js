@@ -8,7 +8,8 @@ export const Direction = Object.freeze({
 export const TileKind = Object.freeze({
   Empty: "empty",
   Belt: "belt",
-  Machine: "machine"
+  Machine: "machine",
+  Bridge: "bridge"
 });
 
 export const DIR_VECTORS = Object.freeze({

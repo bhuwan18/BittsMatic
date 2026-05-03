@@ -1,14 +1,15 @@
-import { Direction, rotateDirection } from "../core/constants.js";
+import { Direction, OPPOSITE, TileKind, rotateDirection } from "../core/constants.js";
 import { TOOLS, createMachineForTool } from "../config/recipes.js";
 import { BlueprintManager } from "../systems/BlueprintManager.js";
 
 export class InputHandler {
-  constructor(canvas, grid, renderer, progression, updateUi) {
+  constructor(canvas, grid, renderer, progression, updateUi, markers = null) {
     this.canvas = canvas;
     this.grid = grid;
     this.renderer = renderer;
     this.progression = progression;
     this.updateUi = updateUi;
+    this.markers = markers;
     this.selectedTool = "belt";
     this.direction = Direction.Right;
     this.dragging = false;
@@ -72,6 +73,7 @@ export class InputHandler {
       return;
     }
 
+    this.renderer.hoveredMachine = this.grid.getMachine(point.x, point.y);
     this.renderer.preview = {
       ...point,
       ...this.#footprintForSelection(point.x, point.y),
@@ -105,6 +107,14 @@ export class InputHandler {
       return;
     }
 
+    if (this.selectedTool === "belt") {
+      const existing = this.grid.getBelt(point.x, point.y);
+      if (existing) {
+        this.#cyclePriority(existing);
+        this.updateUi();
+        return;
+      }
+    }
     this.dragging = this.selectedTool === "belt";
     this.#apply(point);
   }
@@ -120,6 +130,11 @@ export class InputHandler {
       this.copySelection();
       return;
     }
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "x") {
+      event.preventDefault();
+      this.cutSelection();
+      return;
+    }
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "v") {
       event.preventDefault();
       this.enterPasteMode();
@@ -133,6 +148,19 @@ export class InputHandler {
       this.pasteBlueprint = this.blueprints.rotate(this.pasteBlueprint);
       this.#refreshPastePreview();
       this.updateUi();
+      return;
+    }
+    if (event.key.toLowerCase() === "d" && this.selection) {
+      this.demolishSelection();
+      return;
+    }
+    if (event.key.toLowerCase() === "c" && this.selection && !event.ctrlKey && !event.metaKey) {
+      this.clearSelection();
+      return;
+    }
+
+    if (event.key.toLowerCase() === "b" && this.markers) {
+      this.#promptMarker();
       return;
     }
 
@@ -178,18 +206,30 @@ export class InputHandler {
     if (!tool || !this.progression.isUnlocked(tool.unlock)) return false;
     if (this.selectedTool === "remove" || this.selectedTool === "select") return true;
 
+    if (this.selectedTool === "extractor") {
+      const tile = this.grid.tileAt(x, y);
+      return Boolean(tile?.isNode && !tile.occupied);
+    }
+
     const footprint = this.#footprintForSelection(x, y);
     for (let yy = y; yy < y + footprint.height; yy += 1) {
       for (let xx = x; xx < x + footprint.width; xx += 1) {
         const tile = this.grid.tileAt(xx, yy);
-        if (!tile || tile.occupied) return false;
+        if (!tile) return false;
+        if (!tile.occupied) continue;
+        // Allow placing a belt on a perpendicular belt — GridManager auto-upgrades to bridge
+        if (this.selectedTool === "belt" && tile.kind === TileKind.Belt) {
+          const existing = tile.entity.direction;
+          if (existing !== this.direction && existing !== OPPOSITE[this.direction]) continue;
+        }
+        return false;
       }
     }
     return true;
   }
 
   #footprintForSelection(x, y) {
-    if (["add", "subtract", "multiply", "divide"].includes(this.selectedTool)) {
+    if (["add", "subtract", "multiply", "divide", "exponentiate"].includes(this.selectedTool)) {
       return { x, y, width: 1, height: 2 };
     }
     return { x, y, width: 1, height: 1 };
@@ -214,6 +254,30 @@ export class InputHandler {
     this.pasteBlueprint = this.blueprints.current;
     this.renderer.preview = null;
     this.#refreshPastePreview();
+    this.updateUi();
+    return true;
+  }
+
+  cutSelection() {
+    if (!this.copySelection()) return false;
+    const sel = this.selection;
+    if (sel) this.grid.removeRect(sel.x, sel.y, sel.width, sel.height);
+    this.updateUi();
+    return true;
+  }
+
+  demolishSelection() {
+    if (!this.selection) return false;
+    const { x, y, width, height } = this.selection;
+    this.grid.removeRect(x, y, width, height);
+    this.updateUi();
+    return true;
+  }
+
+  clearSelection() {
+    if (!this.selection) return false;
+    const { x, y, width, height } = this.selection;
+    this.grid.clearItemsInRect(x, y, width, height);
     this.updateUi();
     return true;
   }
@@ -271,6 +335,27 @@ export class InputHandler {
   #refreshPastePreview() {
     if (!this.renderer.blueprintPreview || !this.pasteBlueprint) return;
     this.#updatePastePreview(this.renderer.blueprintPreview);
+  }
+
+  #promptMarker() {
+    const dialog = document.getElementById("markerDialog");
+    if (!dialog) return;
+    const input = dialog.querySelector("#markerInput");
+    if (input) input.value = "";
+    dialog.showModal?.();
+    dialog.addEventListener("close", () => {
+      const text = input?.value?.trim();
+      if (text && this.selection) {
+        const { x, y } = this.selection;
+        this.markers.add(x, y, text);
+        this.updateUi();
+      }
+    }, { once: true });
+  }
+
+  #cyclePriority(belt) {
+    const cycle = { null: "left", left: "right", right: null };
+    belt.priority = cycle[belt.priority ?? "null"] ?? null;
   }
 
   #cancelSelectionDrag() {

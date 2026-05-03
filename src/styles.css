@@ -321,6 +321,73 @@ h2 {
   font-weight: 650;
 }
 
+.upgrade-points-label {
+  margin-bottom: 8px;
+  color: #9fb1bd;
+  font-size: 13px;
+}
+
+.upgrade-shop {
+  display: grid;
+  gap: 8px;
+}
+
+.upgrade-item {
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+  background: #0d1b24;
+  border: 1px solid #2e7da4;
+  border-radius: 8px;
+}
+
+.upgrade-item[data-maxed="true"] {
+  border-color: #5d8f6f;
+}
+
+.upgrade-item[data-locked="true"] {
+  opacity: 0.5;
+}
+
+.upgrade-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.upgrade-tier {
+  color: #9fb1bd;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.upgrade-effect {
+  color: #8fa2aa;
+  font-size: 12px;
+}
+
+.upgrade-buy {
+  min-height: 30px;
+  padding: 4px 8px;
+  color: #edf4f7;
+  background: #173b4e;
+  border: 1px solid #2e7da4;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.upgrade-buy:disabled {
+  color: #687981;
+  background: #15242c;
+  cursor: not-allowed;
+}
+
+.upgrade-buy:not(:disabled):hover {
+  border-color: #f2c14e;
+}
+
 @media (max-width: 860px) {
   body {
     overflow: auto;

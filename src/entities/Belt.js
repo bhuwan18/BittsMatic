@@ -6,6 +6,7 @@ export class Belt {
     this.speed = 1;
     this.item = null;
     this.animationPhase = 0;
+    this.priority = null;  // null | "left" | "right" — relative to belt direction
   }
 
   canAcceptItem() {

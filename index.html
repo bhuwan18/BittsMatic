@@ -58,6 +58,12 @@
         </section>
 
         <section>
+          <h2>Upgrades</h2>
+          <p class="upgrade-points-label" id="upgradePointsLabel"></p>
+          <div class="upgrade-shop" id="upgradeShop"></div>
+        </section>
+
+        <section>
           <h2>Controls</h2>
           <div class="control-grid">
             <span>Place</span><strong>Left click / drag</strong>
@@ -66,12 +72,28 @@
             <span>Zoom</span><strong>Mouse wheel</strong>
             <span>Pan</span><strong>Shift drag / middle drag</strong>
             <span>Select</span><strong>Tool 8 / Ctrl drag</strong>
-            <span>Blueprint</span><strong>Ctrl C / Ctrl V / Esc</strong>
-            <span>Tools</span><strong>1-8</strong>
+            <span>Blueprint</span><strong>Ctrl C/X/V, Esc</strong>
+            <span>Demolish sel.</span><strong>D</strong>
+            <span>Clear items</span><strong>C</strong>
+            <span>Marker</span><strong>B</strong>
+            <span>Priority</span><strong>Click belt</strong>
+            <span>Tools</span><strong>1-9</strong>
           </div>
         </section>
       </aside>
     </main>
+
+    <dialog id="markerDialog" aria-label="Add marker label">
+      <form method="dialog">
+        <label for="markerInput">Label this area:</label>
+        <input id="markerInput" type="text" maxlength="32" autocomplete="off" />
+        <menu>
+          <button type="submit">Add</button>
+          <button type="button" onclick="document.getElementById('markerDialog').close()">Cancel</button>
+        </menu>
+      </form>
+    </dialog>
+
     <script type="module" src="./src/main.js"></script>
   </body>
 </html>

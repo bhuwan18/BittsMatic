@@ -1,7 +1,7 @@
-import { Direction, rotateDirection, TileKind } from "../core/constants.js";
+import { Direction, OPPOSITE, rotateDirection, TileKind } from "../core/constants.js";
 import { Machine } from "../entities/Machine.js";
 
-const MATH_TYPES = new Set(["add", "subtract", "multiply", "divide"]);
+const MATH_TYPES = new Set(["add", "subtract", "multiply", "divide", "exponentiate"]);
 
 export class BlueprintManager {
   constructor(grid) {
@@ -29,6 +29,12 @@ export class BlueprintManager {
           });
         }
 
+        if (tile.kind === TileKind.Bridge) {
+          for (const layer of tile.entity.layers) {
+            belts.push({ x: x - bounds.x, y: y - bounds.y, direction: layer.direction, speed: layer.speed });
+          }
+        }
+
         if (tile.kind === TileKind.Machine && !tile.entity.fixed && !seenMachines.has(tile.entity.id)) {
           machines.push(this.#serializeMachine(tile.entity, bounds));
           seenMachines.add(tile.entity.id);
@@ -52,7 +58,7 @@ export class BlueprintManager {
     const required = new Set();
 
     for (const belt of blueprint.belts) {
-      this.#collectTile(required, invalidTiles, x + belt.x, y + belt.y);
+      this.#collectTile(required, invalidTiles, x + belt.x, y + belt.y, belt.direction);
     }
 
     for (const machine of blueprint.machines) {
@@ -71,7 +77,11 @@ export class BlueprintManager {
 
     for (const belt of blueprint.belts) {
       const placed = this.grid.placeBelt(x + belt.x, y + belt.y, belt.direction);
-      if (placed) this.grid.getBelt(x + belt.x, y + belt.y).speed = belt.speed;
+      if (placed) {
+        // If placeBelt auto-upgraded to a bridge, getBelt returns null — safe to skip speed
+        const entity = this.grid.getBelt(x + belt.x, y + belt.y);
+        if (entity) entity.speed = belt.speed;
+      }
     }
 
     for (const machine of blueprint.machines) {
@@ -113,12 +123,20 @@ export class BlueprintManager {
     return rotated;
   }
 
-  #collectTile(required, invalidTiles, x, y) {
+  #collectTile(required, invalidTiles, x, y, beltDirection = null) {
     const key = `${x},${y}`;
     if (required.has(key)) return;
     required.add(key);
     const tile = this.grid.tileAt(x, y);
-    if (!tile || tile.occupied) invalidTiles.push({ x, y });
+    if (!tile) { invalidTiles.push({ x, y }); return; }
+    if (tile.occupied) {
+      // Allow pasting a belt over a perpendicular belt — placeBelt will auto-bridge
+      if (beltDirection !== null && tile.kind === TileKind.Belt) {
+        const existing = tile.entity.direction;
+        if (existing !== beltDirection && existing !== OPPOSITE[beltDirection]) return;
+      }
+      invalidTiles.push({ x, y });
+    }
   }
 
   #expandedBounds(selection) {
@@ -151,6 +169,7 @@ export class BlueprintManager {
       width: machine.width ?? 1,
       height: machine.height ?? 1,
       output: machine.output,
+      secondaryOutput: machine.secondaryOutput ?? null,
       orientation: machine.orientation,
       processTicks: machine.processTicks,
       sourceValue: machine.sourceValue,
@@ -168,15 +187,28 @@ export class BlueprintManager {
         interval: data.sourceInterval
       });
     }
+    if (data.type === "extractor") {
+      return Machine.extractor({
+        x,
+        y,
+        output: data.output,
+        nodeValue: data.sourceValue,
+        interval: data.sourceInterval
+      });
+    }
     if (MATH_TYPES.has(data.type)) {
       return Machine.math({
         type: data.type,
         x,
         y,
         output: data.output,
+        secondaryOutput: data.secondaryOutput ?? null,
         ticks: data.processTicks,
         orientation: data.orientation
       });
+    }
+    if (data.type === "storage") {
+      return Machine.storage({ x, y, output: data.output });
     }
     return null;
   }

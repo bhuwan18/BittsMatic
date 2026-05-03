@@ -7,10 +7,15 @@ export class Tile {
     this.kind = TileKind.Empty;
     this.entity = null;
     this.parentMachineId = null;
+    this.nodeValue = null;
   }
 
   get occupied() {
     return this.entity !== null;
+  }
+
+  get isNode() {
+    return this.nodeValue !== null;
   }
 
   setEntity(kind, entity) {
