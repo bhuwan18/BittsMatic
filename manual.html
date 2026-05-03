@@ -75,6 +75,32 @@
       margin-top: 2px;
     }
 
+    .back-btn {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-top: 14px;
+      padding: 8px 12px;
+      width: 100%;
+      font-size: .82rem;
+      font-weight: 600;
+      color: var(--text);
+      background: rgba(88,166,255,.08);
+      border: 1px solid rgba(88,166,255,.25);
+      border-radius: var(--radius);
+      cursor: pointer;
+      text-decoration: none;
+      transition: background .15s, border-color .15s, color .15s;
+    }
+
+    .back-btn:hover {
+      background: rgba(88,166,255,.18);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .back-btn .arrow { font-size: 1rem; line-height: 1; }
+
     nav.sidebar ul {
       list-style: none;
       padding: 0 12px;
@@ -489,6 +515,9 @@
     <div class="logo">
       <h1>BittsMatic</h1>
       <span>User Manual</span>
+      <button class="back-btn" id="backBtn" type="button">
+        <span class="arrow">←</span> Return to game
+      </button>
     </div>
 
     <div class="section-label">Getting Started</div>
@@ -1140,6 +1169,19 @@
 
   </main>
 </div>
+
+<!-- Return to game -->
+<script>
+  document.getElementById('backBtn').addEventListener('click', () => {
+    // If this tab was opened by the game, close it (returns focus to the game tab).
+    // If the user navigated here directly, fall back to opening index.html.
+    if (window.opener && !window.opener.closed) {
+      window.close();
+    } else {
+      window.location.href = 'index.html';
+    }
+  });
+</script>
 
 <!-- Sidebar active-link tracking -->
 <script>
