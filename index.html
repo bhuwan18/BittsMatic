@@ -4,20 +4,48 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>BittsMatic</title>
+    <meta name="google-signin-client_id" content="37598734567-69shalaj811bk49m48nic525c9j6vcqs.apps.googleusercontent.com" />
     <link rel="stylesheet" href="./src/styles.css" />
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
   </head>
-  <body>
+  <body data-auth="login">
+    <section class="login-screen" id="loginScreen">
+      <div class="login-panel">
+        <h1>BittsMatic</h1>
+        <p class="subtle">Sign in to save your number factory progress and objectives.</p>
+        <div id="googleButton" class="google-button"></div>
+        <p class="login-error" id="loginError" role="status"></p>
+      </div>
+    </section>
     <main class="app-shell">
       <section class="game-panel">
+        <div class="objective-banner" id="objectiveBanner">
+          <span id="objectiveText">Goal: Produce 1</span>
+          <small id="objectiveStatus">Deliver the exact number to the CORE.</small>
+        </div>
+        <div class="success-toast" id="successToast" role="status">Objective complete</div>
         <canvas id="game" width="1152" height="864" aria-label="BittsMatic factory grid"></canvas>
       </section>
       <aside class="side-panel">
-        <div>
-          <h1>BittsMatic</h1>
-          <p class="subtle">Build belts, feed the core, unlock machines.</p>
+        <div class="profile-row">
+          <div>
+            <h1>BittsMatic</h1>
+            <p class="subtle" id="playerName">Build belts, feed the core, unlock machines.</p>
+          </div>
+          <button id="logoutButton" class="logout-button" type="button">Log out</button>
         </div>
 
         <div class="toolbar" id="toolbar" aria-label="Build tools"></div>
+
+        <section>
+          <h2>Blueprint</h2>
+          <div class="blueprint-controls">
+            <button id="copyBlueprint" type="button">Copy</button>
+            <button id="pasteBlueprint" type="button">Paste</button>
+            <button id="rotateBlueprint" type="button">Rotate</button>
+          </div>
+          <p class="blueprint-status" id="blueprintStatus">No blueprint copied.</p>
+        </section>
 
         <section>
           <h2>Inventory</h2>
@@ -35,7 +63,11 @@
             <span>Place</span><strong>Left click / drag</strong>
             <span>Rotate</span><strong>Right click or R</strong>
             <span>Remove</span><strong>Pick delete tool</strong>
-            <span>Tools</span><strong>1-5</strong>
+            <span>Zoom</span><strong>Mouse wheel</strong>
+            <span>Pan</span><strong>Shift drag / middle drag</strong>
+            <span>Select</span><strong>Tool 8 / Ctrl drag</strong>
+            <span>Blueprint</span><strong>Ctrl C / Ctrl V / Esc</strong>
+            <span>Tools</span><strong>1-8</strong>
           </div>
         </section>
       </aside>

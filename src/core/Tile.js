@@ -6,6 +6,7 @@ export class Tile {
     this.y = y;
     this.kind = TileKind.Empty;
     this.entity = null;
+    this.parentMachineId = null;
   }
 
   get occupied() {
@@ -15,10 +16,12 @@ export class Tile {
   setEntity(kind, entity) {
     this.kind = kind;
     this.entity = entity;
+    this.parentMachineId = kind === TileKind.Machine ? entity.id : null;
   }
 
   clear() {
     this.kind = TileKind.Empty;
     this.entity = null;
+    this.parentMachineId = null;
   }
 }

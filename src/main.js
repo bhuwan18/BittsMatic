@@ -4,40 +4,138 @@ import { GridManager } from "./core/GridManager.js";
 import { Machine } from "./entities/Machine.js";
 import { InputHandler } from "./input/InputHandler.js";
 import { Renderer } from "./rendering/Renderer.js";
-import { ITEM_COLORS, TOOLS } from "./config/recipes.js";
+import { TOOLS } from "./config/recipes.js";
+import { AuthSession, profileFromGoogleCredential } from "./systems/AuthSession.js";
 import { Progression } from "./systems/Progression.js";
 
 const canvas = document.querySelector("#game");
 const toolbar = document.querySelector("#toolbar");
 const resources = document.querySelector("#resources");
 const milestones = document.querySelector("#milestones");
+const copyBlueprintButton = document.querySelector("#copyBlueprint");
+const pasteBlueprintButton = document.querySelector("#pasteBlueprint");
+const rotateBlueprintButton = document.querySelector("#rotateBlueprint");
+const blueprintStatus = document.querySelector("#blueprintStatus");
+const loginScreen = document.querySelector("#loginScreen");
+const googleButton = document.querySelector("#googleButton");
+const loginError = document.querySelector("#loginError");
+const logoutButton = document.querySelector("#logoutButton");
+const playerName = document.querySelector("#playerName");
+const objectiveText = document.querySelector("#objectiveText");
+const objectiveStatus = document.querySelector("#objectiveStatus");
+const objectiveBanner = document.querySelector("#objectiveBanner");
+const successToast = document.querySelector("#successToast");
 
-const grid = new GridManager(24, 20);
-const progression = new Progression();
-const loop = new GameLoop(grid, { progression, tickRate: 5 });
+const auth = new AuthSession();
+let grid = null;
+let progression = null;
+let loop = null;
+let renderer = null;
+let input = null;
+let animationFrame = 0;
+let lastTime = 0;
+let lastCompletedObjective = null;
 
-grid.placeMachine(Machine.core({ x: 12, y: 10 }));
-
-const renderer = new Renderer(canvas, grid, loop, progression);
-const input = new InputHandler(canvas, grid, renderer, progression, updateUi);
-
-window.addEventListener("resize", () => renderer.resize());
-renderer.resize();
-updateUi();
-
-let lastTime = performance.now();
-function frame(now) {
-  const delta = Math.min(0.1, (now - lastTime) / 1000);
-  lastTime = now;
-  loop.update(delta);
-  renderer.render(input.direction);
-  updateUi(false);
-  requestAnimationFrame(frame);
+if (auth.isLoggedIn()) {
+  showGame();
+} else {
+  showLogin();
 }
-requestAnimationFrame(frame);
+
+logoutButton.addEventListener("click", () => {
+  auth.signOut();
+  if (animationFrame) cancelAnimationFrame(animationFrame);
+  window.location.reload();
+});
+
+function showLogin() {
+  loginScreen.hidden = false;
+  document.body.dataset.auth = "login";
+  renderGoogleButton();
+}
+
+function showGame() {
+  loginScreen.hidden = true;
+  document.body.dataset.auth = "game";
+  startGame();
+}
+
+function renderGoogleButton() {
+  const clientId = document.querySelector('meta[name="google-signin-client_id"]')?.content?.trim();
+  if (!clientId) {
+    loginError.textContent = "Add your Google OAuth client ID to the google-signin-client_id meta tag.";
+    return;
+  }
+
+  const waitForGoogle = () => {
+    if (!globalThis.google?.accounts?.id) {
+      window.setTimeout(waitForGoogle, 100);
+      return;
+    }
+
+    globalThis.google.accounts.id.initialize({
+      client_id: clientId,
+      callback: (response) => {
+        try {
+          const profile = profileFromGoogleCredential(response.credential);
+          auth.signInWithProfile(profile);
+          showGame();
+        } catch (error) {
+          loginError.textContent = error.message || "Google sign-in failed. Please try again.";
+        }
+      }
+    });
+    globalThis.google.accounts.id.renderButton(googleButton, {
+      theme: "filled_black",
+      size: "large",
+      type: "standard",
+      text: "signin_with",
+      shape: "rectangular"
+    });
+  };
+
+  waitForGoogle();
+}
+
+function startGame() {
+  grid = new GridManager(50, 50);
+  progression = new Progression({
+    saveData: auth.loadProgress(),
+    onChange: (state) => {
+      auth.saveProgress(state.toSaveData());
+      updateUi(false);
+    }
+  });
+  loop = new GameLoop(grid, { progression, tickRate: 1 });
+
+  const coreX = Math.floor(grid.width / 2) - 1;
+  const coreY = Math.floor(grid.height / 2) - 1;
+  const core = Machine.core({ x: coreX, y: coreY });
+  grid.placeMachine(core);
+
+  renderer = new Renderer(canvas, grid, loop, progression);
+  input = new InputHandler(canvas, grid, renderer, progression, updateUi);
+  copyBlueprintButton.addEventListener("click", () => input.copySelection());
+  pasteBlueprintButton.addEventListener("click", () => input.enterPasteMode());
+  rotateBlueprintButton.addEventListener("click", () => input.rotatePasteBlueprint());
+
+  window.addEventListener("resize", () => renderer.resize());
+  renderer.resize();
+  renderer.centerOn(coreX + 1, coreY + 1);
+  playerName.textContent = auth.user?.name ? `Signed in as ${auth.user.name}` : "Signed in";
+  updateUi();
+
+  // Seed a tiny hint of direction without solving the factory for the player.
+  grid.placeBelt(coreX - 1, coreY + 1, Direction.Right);
+
+  lastTime = performance.now();
+  animationFrame = requestAnimationFrame(frame);
+}
 
 function updateUi(rebuildToolbar = true) {
   if (rebuildToolbar) renderToolbar();
+  renderObjective();
+  renderBlueprint();
   renderResources();
   renderMilestones();
 }
@@ -56,12 +154,55 @@ function renderToolbar() {
   }));
 }
 
+function renderObjective() {
+  const objective = progression.currentObjective();
+  objectiveText.textContent = objective ? `Goal: Produce ${objective.target}` : "All objectives complete";
+  const completed = progression.completedObjectives.length;
+  const wrong = progression.wrongDeliveries;
+  objectiveStatus.textContent = `${completed}/${progression.objectives.length} complete${wrong ? ` - ${wrong} rejected` : ""}`;
+
+  const completedObjective = progression.lastDelivery?.completedObjective;
+  if (completedObjective && completedObjective !== lastCompletedObjective) {
+    lastCompletedObjective = completedObjective;
+    objectiveBanner.classList.remove("complete-pulse");
+    successToast.classList.remove("show");
+    requestAnimationFrame(() => {
+      objectiveBanner.classList.add("complete-pulse");
+      successToast.textContent = `Objective complete. Next goal: ${objective?.target ?? "done"}`;
+      successToast.classList.add("show");
+      window.setTimeout(() => successToast.classList.remove("show"), 1800);
+    });
+  }
+}
+
+function renderBlueprint() {
+  const summary = input.blueprintSummary();
+  copyBlueprintButton.disabled = !summary.selection;
+  pasteBlueprintButton.disabled = !summary.copied;
+  rotateBlueprintButton.disabled = !summary.pasting;
+
+  if (summary.pasting) {
+    blueprintStatus.textContent = `Pasting ${summary.entities} entities. Click to place, R to rotate, Esc to cancel.`;
+  } else if (summary.copied) {
+    blueprintStatus.textContent = `Copied ${summary.entities} entities over ${summary.size.width}x${summary.size.height} tiles.`;
+  } else if (summary.selection) {
+    blueprintStatus.textContent = `Selected ${summary.selection.width}x${summary.selection.height} tiles.`;
+  } else {
+    blueprintStatus.textContent = "Select tiles with tool 8 or Ctrl drag, then copy.";
+  }
+}
+
 function renderResources() {
-  const known = ["ore", "plate", "gear"];
-  resources.replaceChildren(...known.map((type) => {
+  const known = [...progression.resources.keys()].sort((a, b) => Number(a) - Number(b));
+  const values = known.length ? known : ["none"];
+  resources.replaceChildren(...values.map((value) => {
     const row = document.createElement("div");
     row.className = "resource-row";
-    row.innerHTML = `<span class="swatch" style="background:${ITEM_COLORS[type]}"></span><span>${type}</span><strong>${progression.count(type)}</strong>`;
+    if (value === "none") {
+      row.innerHTML = `<span class="swatch"></span><span>core values</span><strong>0</strong>`;
+    } else {
+      row.innerHTML = `<span class="swatch"></span><span>${value}</span><strong>${progression.count(value)}</strong>`;
+    }
     return row;
   }));
 }
@@ -72,12 +213,18 @@ function renderMilestones() {
     item.className = "milestone";
     item.dataset.unlocked = String(milestone.unlocked);
     const requirements = Object.entries(milestone.requirements)
-      .map(([type, count]) => `${progression.count(type)}/${count} ${type}`)
+      .map(([value, count]) => `${progression.count(value)}/${count} value ${value}`)
       .join(", ");
     item.innerHTML = `<strong>${milestone.label}</strong><span>${milestone.unlocked ? "Unlocked" : requirements}</span>`;
     return item;
   }));
 }
 
-// Seed a tiny hint of direction without solving the factory for the player.
-grid.placeBelt(11, 10, Direction.Right);
+function frame(now) {
+  const delta = Math.min(0.1, (now - lastTime) / 1000);
+  lastTime = now;
+  loop.update(delta);
+  renderer.render(input.direction);
+  updateUi(false);
+  animationFrame = requestAnimationFrame(frame);
+}

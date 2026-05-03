@@ -4,7 +4,7 @@ import { keyOf, neighborOf, OPPOSITE, rotateDirection, TileKind } from "./consta
 import { Tile } from "./Tile.js";
 
 export class GridManager {
-  constructor(width = 24, height = 20) {
+  constructor(width = 50, height = 50) {
     this.width = width;
     this.height = height;
     this.tiles = new Map();
@@ -39,9 +39,12 @@ export class GridManager {
 
   placeMachine(machine) {
     if (!(machine instanceof Machine)) return false;
-    const tile = this.tileAt(machine.x, machine.y);
-    if (!tile || tile.occupied) return false;
-    tile.setEntity(TileKind.Machine, machine);
+    for (const tile of this.tilesForFootprint(machine)) {
+      if (!tile || tile.occupied) return false;
+    }
+    for (const tile of this.tilesForFootprint(machine)) {
+      tile.setEntity(TileKind.Machine, machine);
+    }
     this.machines.set(machine.id, machine);
     return true;
   }
@@ -50,6 +53,7 @@ export class GridManager {
     const tile = this.tileAt(x, y);
     if (!tile || !tile.occupied) return false;
     const entity = tile.entity;
+    if (tile.kind === TileKind.Machine && entity.fixed) return false;
     if (tile.kind === TileKind.Belt && entity.item) {
       this.items.delete(entity.item.id);
     }
@@ -60,7 +64,11 @@ export class GridManager {
       }
       if (entity.pendingOutput) this.items.delete(entity.pendingOutput.id);
     }
-    tile.clear();
+    if (tile.kind === TileKind.Machine) {
+      for (const footprintTile of this.tilesForFootprint(entity)) footprintTile?.clear();
+    } else {
+      tile.clear();
+    }
     return true;
   }
 
@@ -91,6 +99,16 @@ export class GridManager {
     return [...this.machines.values()];
   }
 
+  tilesForFootprint(entity) {
+    const tiles = [];
+    for (let y = entity.y; y < entity.y + (entity.height ?? 1); y += 1) {
+      for (let x = entity.x; x < entity.x + (entity.width ?? 1); x += 1) {
+        tiles.push(this.tileAt(x, y));
+      }
+    }
+    return tiles;
+  }
+
   tryInsertItemAt(x, y, item, fromDirection) {
     const belt = this.getBelt(x, y);
     if (!belt || !belt.canAcceptItem(fromDirection)) return false;
@@ -100,8 +118,9 @@ export class GridManager {
   }
 
   tryEmitFromMachine(machine, item) {
-    const target = neighborOf(machine, machine.output);
-    return this.tryTransferItem(item, machine, target, machine.output);
+    const origin = machineOutputOrigin(machine);
+    const target = neighborOf(origin, machine.output);
+    return this.tryTransferItem(item, origin, target, machine.output);
   }
 
   tryTransferItem(item, fromPosition, targetPosition, travelDirection) {
@@ -113,17 +132,36 @@ export class GridManager {
       const belt = tile.entity;
       if (!belt.canAcceptItem(OPPOSITE[travelDirection])) return false;
       belt.insertItem(item, { x: fromPosition.x, y: fromPosition.y }, targetPosition);
+      item.offset = 0;
       this.items.set(item.id, item);
       return true;
     }
 
     if (tile.kind === TileKind.Machine) {
       const machine = tile.entity;
-      if (!machine.acceptItem(travelDirection, item)) return false;
+      if (!machine.acceptItem(travelDirection, item, targetPosition)) return false;
       this.items.set(item.id, item);
       return true;
     }
 
     return false;
   }
+}
+
+function machineOutputOrigin(machine) {
+  if (["add", "subtract", "multiply", "divide"].includes(machine.type)) {
+    if (machine.orientation === "horizontal") {
+      const aTile = { x: machine.x + (machine.width ?? 1) - 1, y: machine.y };
+      if (machine.output === "left") return { x: machine.x, y: machine.y };
+      return aTile;
+    }
+    if (machine.output === "left") return { x: machine.x, y: machine.y };
+    if (machine.output === "right") return { x: machine.x + (machine.width ?? 1) - 1, y: machine.y };
+    if (machine.output === "up") return { x: machine.x, y: machine.y };
+    return { x: machine.x, y: machine.y + (machine.height ?? 1) - 1 };
+  }
+  if (machine.output === "left") return { x: machine.x, y: machine.y + Math.floor((machine.height ?? 1) / 2) };
+  if (machine.output === "right") return { x: machine.x + (machine.width ?? 1) - 1, y: machine.y + Math.floor((machine.height ?? 1) / 2) };
+  if (machine.output === "up") return { x: machine.x + Math.floor((machine.width ?? 1) / 2), y: machine.y };
+  return { x: machine.x + Math.floor((machine.width ?? 1) / 2), y: machine.y + (machine.height ?? 1) - 1 };
 }

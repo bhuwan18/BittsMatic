@@ -3,6 +3,7 @@ export class Belt {
     this.x = x;
     this.y = y;
     this.direction = direction;
+    this.speed = 1;
     this.item = null;
     this.animationPhase = 0;
   }
@@ -16,7 +17,7 @@ export class Belt {
     this.item = item;
     item.from = from;
     item.to = to ?? { x: this.x, y: this.y };
-    item.progress = 0;
+    item.offset = 0;
     return true;
   }
 

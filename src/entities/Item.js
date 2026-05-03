@@ -1,16 +1,23 @@
 let nextItemId = 1;
 
 export class Item {
-  constructor(type, metadata = {}) {
+  constructor(value, metadata = {}) {
     this.id = `item-${nextItemId++}`;
-    this.type = type;
+    this.type = "number";
+    this.value = Number.isFinite(value) ? value : 0;
+    this.label = formatNumber(this.value);
     this.metadata = { ...metadata };
-    this.progress = 0;
+    this.offset = 0;
     this.from = null;
     this.to = null;
   }
 
-  cloneAs(type, metadata = {}) {
-    return new Item(type, { ...this.metadata, ...metadata });
+  cloneAs(value, metadata = {}) {
+    return new Item(value, { ...this.metadata, ...metadata });
   }
+}
+
+function formatNumber(value) {
+  if (Number.isInteger(value)) return value.toString();
+  return Number(value.toFixed(3)).toString();
 }

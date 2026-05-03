@@ -1,49 +1,54 @@
 import { keyOf, neighborOf, OPPOSITE, TileKind } from "./constants.js";
 
 export class GameLoop {
-  constructor(grid, { progression = null, tickRate = 4 } = {}) {
+  constructor(grid, { progression = null, tickRate = 1, logger = console } = {}) {
     this.grid = grid;
     this.progression = progression;
     this.tickRate = tickRate;
     this.tickCount = 0;
     this.accumulator = 0;
     this.running = false;
+    this.logger = logger;
   }
 
   update(deltaSeconds) {
-    const stepLength = 1 / this.tickRate;
-    this.accumulator += deltaSeconds;
-    while (this.accumulator >= stepLength) {
-      this.step();
-      this.accumulator -= stepLength;
+    let remaining = Math.max(0, deltaSeconds);
+    while (remaining > 0) {
+      const delta = Math.min(remaining, 0.25);
+      this.#tickMachines(delta);
+      this.#moveBelts(delta);
+      remaining -= delta;
     }
   }
 
   step() {
-    const context = {
-      emitFromMachine: (machine, item) => {
-        const emitted = this.grid.tryEmitFromMachine(machine, item);
-        if (emitted) item.blockedUntilTick = this.tickCount + 1;
-        return emitted;
-      },
-      deliver: (item) => this.#deliver(item)
-    };
-
-    for (const machine of this.grid.machinesList()) machine.tick(context);
-    this.#moveBelts();
-    this.tickCount += 1;
+    this.update(1);
   }
 
-  #deliver(item) {
-    this.grid.items.delete(item.id);
-    this.progression?.deliver(item.type, 1);
+  #tickMachines(deltaSeconds) {
+    const stepLength = 1 / this.tickRate;
+    this.accumulator += deltaSeconds;
+    while (this.accumulator >= stepLength) {
+      const context = {
+        emitFromMachine: (machine, item) => this.grid.tryEmitFromMachine(machine, item),
+        consumeItem: (item) => this.grid.items.delete(item.id),
+        deliver: (item) => this.progression?.deliver(item.value, 1),
+        logMachineBlocked: (machine, item) => this.#logMachineBlocked(machine, item)
+      };
+      for (const machine of this.grid.machinesList()) machine.tick(context);
+      this.tickCount += 1;
+      this.accumulator -= stepLength;
+    }
   }
 
-  #moveBelts() {
-    const belts = this.grid.belts().filter((belt) => {
-      return belt.item && (belt.item.blockedUntilTick ?? 0) <= this.tickCount;
-    });
-    const intents = belts.map((belt) => {
+  #moveBelts(deltaSeconds) {
+    const movingBelts = this.grid.belts().filter((belt) => belt.item);
+    for (const belt of movingBelts) {
+      belt.item.offset = Math.min(1, belt.item.offset + belt.speed * deltaSeconds);
+    }
+
+    const readyBelts = movingBelts.filter((belt) => belt.item?.offset >= 1);
+    const intents = readyBelts.map((belt) => {
       const target = neighborOf(belt, belt.direction);
       return {
         belt,
@@ -57,7 +62,10 @@ export class GameLoop {
 
     const candidates = new Map();
     for (const intent of intents) {
-      if (!this.#canIntentMove(intent, intents)) continue;
+      if (!this.#canIntentMove(intent, intents)) {
+        this.#logMovementFailure(intent, "blocked-or-invalid-target");
+        continue;
+      }
       const candidateKey = this.#candidateKey(intent);
       if (!candidates.has(candidateKey)) candidates.set(candidateKey, []);
       candidates.get(candidateKey).push(intent);
@@ -67,6 +75,7 @@ export class GameLoop {
     for (const group of candidates.values()) {
       group.sort((a, b) => a.belt.y - b.belt.y || a.belt.x - b.belt.x || a.item.id.localeCompare(b.item.id));
       accepted.push(group[0]);
+      for (const rejected of group.slice(1)) this.#logMovementFailure(rejected, "transfer-priority-lost");
     }
 
     const acceptedFrom = new Set(accepted.map((intent) => intent.fromKey));
@@ -76,25 +85,32 @@ export class GameLoop {
       const tile = this.grid.tileAt(intent.target.x, intent.target.y);
       if (tile.kind === TileKind.Belt && tile.entity.item && !acceptedFrom.has(intent.targetKey)) {
         acceptedTo.delete(intent.targetKey);
+        this.#logMovementFailure(intent, "target-item-did-not-move");
       }
     }
 
-    for (const intent of accepted.filter((move) => acceptedTo.has(move.targetKey))) {
-      intent.belt.removeItem();
-    }
+    const finalMoves = accepted.filter((move) => acceptedTo.has(move.targetKey));
+    for (const intent of finalMoves) intent.belt.removeItem();
 
-    for (const intent of accepted.filter((move) => acceptedTo.has(move.targetKey))) {
+    for (const intent of finalMoves) {
       const tile = this.grid.tileAt(intent.target.x, intent.target.y);
       if (tile.kind === TileKind.Belt) {
-        tile.entity.insertItem(intent.item, { x: intent.belt.x, y: intent.belt.y }, intent.target);
+        if (!tile.entity.insertItem(intent.item, { x: intent.belt.x, y: intent.belt.y }, intent.target)) {
+          intent.belt.insertItem(intent.item, intent.item.from, intent.item.to);
+          intent.item.offset = 1;
+          this.#logMovementFailure(intent, "late-belt-reject-restored");
+        }
       } else if (tile.kind === TileKind.Machine) {
-        tile.entity.acceptItem(intent.direction, intent.item);
-        this.grid.items.delete(intent.item.id);
+        if (!tile.entity.acceptItem(intent.direction, intent.item, intent.target)) {
+          intent.belt.insertItem(intent.item, intent.item.from, intent.item.to);
+          intent.item.offset = 1;
+          this.#logMovementFailure(intent, "late-machine-reject-restored");
+        }
       }
     }
 
     for (const belt of this.grid.belts()) {
-      belt.animationPhase = (belt.animationPhase + 1) % 8;
+      belt.animationPhase = (belt.animationPhase + deltaSeconds * belt.speed) % 1;
     }
   }
 
@@ -111,7 +127,7 @@ export class GameLoop {
     }
 
     if (tile.kind === TileKind.Machine) {
-      return tile.entity.canAcceptItem(intent.direction, intent.item);
+      return tile.entity.canAcceptItem(intent.direction, intent.item, intent.target);
     }
 
     return false;
@@ -120,8 +136,27 @@ export class GameLoop {
   #candidateKey(intent) {
     const tile = this.grid.tileAt(intent.target.x, intent.target.y);
     if (tile?.kind === TileKind.Machine) {
-      return `${intent.targetKey}:${OPPOSITE[intent.direction]}`;
+      return intent.targetKey;
     }
     return intent.targetKey;
+  }
+
+  #logMovementFailure(intent, reason) {
+    this.logger?.debug?.("[movement-failed]", {
+      reason,
+      itemId: intent.item.id,
+      value: intent.item.value,
+      from: { x: intent.belt.x, y: intent.belt.y },
+      to: intent.target
+    });
+  }
+
+  #logMachineBlocked(machine, item) {
+    this.logger?.debug?.("[machine-blocked]", {
+      machineId: machine.id,
+      type: machine.type,
+      value: item.value,
+      output: machine.output
+    });
   }
 }

@@ -1,7 +1,7 @@
 :root {
   color-scheme: dark;
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background: #101417;
+  background: #15557a;
   color: #edf4f7;
 }
 
@@ -15,20 +15,115 @@ body {
   overflow: hidden;
 }
 
+body[data-auth="login"] .app-shell {
+  display: none;
+}
+
+body[data-auth="game"] .login-screen {
+  display: none;
+}
+
 button {
   font: inherit;
 }
 
+.login-screen {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 24px;
+  background:
+    linear-gradient(135deg, rgba(10, 24, 32, 0.86), rgba(19, 85, 122, 0.74)),
+    #15557a;
+}
+
+.login-panel {
+  display: grid;
+  gap: 16px;
+  width: min(100%, 380px);
+  padding: 24px;
+  background: #102734;
+  border: 1px solid rgba(102, 190, 231, 0.4);
+  border-radius: 8px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.24);
+}
+
+.google-button {
+  min-height: 44px;
+}
+
+.login-error {
+  min-height: 18px;
+  color: #ffcf8a;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
 .app-shell {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 320px;
+  grid-template-columns: minmax(0, 1fr) 300px;
   height: 100vh;
 }
 
 .game-panel {
+  position: relative;
   min-width: 0;
   min-height: 0;
-  background: #101417;
+  background: #15557a;
+}
+
+.objective-banner {
+  position: absolute;
+  z-index: 2;
+  top: 14px;
+  left: 50%;
+  display: grid;
+  gap: 2px;
+  min-width: min(440px, calc(100% - 28px));
+  padding: 10px 14px;
+  color: #071208;
+  background: #f2c14e;
+  border: 2px solid #2b1d05;
+  border-radius: 8px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.24);
+  text-align: center;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.objective-banner span {
+  font-size: 18px;
+  font-weight: 850;
+}
+
+.objective-banner small {
+  color: #3d2b07;
+  font-weight: 700;
+}
+
+.objective-banner.complete-pulse {
+  animation: completePulse 700ms ease-out;
+}
+
+.success-toast {
+  position: absolute;
+  z-index: 3;
+  top: 78px;
+  left: 50%;
+  padding: 9px 12px;
+  color: #edf4f7;
+  background: #145f35;
+  border: 1px solid #7ee098;
+  border-radius: 8px;
+  opacity: 0;
+  transform: translate(-50%, -8px);
+  transition: opacity 180ms ease, transform 180ms ease;
+  pointer-events: none;
+}
+
+.success-toast.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
 }
 
 #game {
@@ -43,8 +138,8 @@ button {
   flex-direction: column;
   gap: 22px;
   padding: 22px;
-  background: #192126;
-  border-left: 1px solid #2d3c44;
+  background: #102734;
+  border-left: 1px solid rgba(102, 190, 231, 0.35);
   overflow-y: auto;
 }
 
@@ -57,6 +152,27 @@ p {
 h1 {
   font-size: 24px;
   font-weight: 760;
+}
+
+.profile-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 12px;
+}
+
+.logout-button {
+  min-height: 34px;
+  padding: 6px 10px;
+  color: #edf4f7;
+  background: #0d1b24;
+  border: 1px solid #2e7da4;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.logout-button:hover {
+  border-color: #f2c14e;
 }
 
 h2 {
@@ -89,20 +205,20 @@ h2 {
   min-height: 42px;
   padding: 8px;
   color: #edf4f7;
-  background: #243039;
-  border: 1px solid #3a4b55;
+  background: #0d1b24;
+  border: 1px solid #2e7da4;
   border-radius: 8px;
   cursor: pointer;
 }
 
 .tool-button[data-active="true"] {
   border-color: #f2c14e;
-  background: #344149;
+  background: #173b4e;
 }
 
 .tool-button:disabled {
   color: #687981;
-  background: #1d252b;
+  background: #15242c;
   cursor: not-allowed;
 }
 
@@ -111,7 +227,7 @@ h2 {
   place-items: center;
   width: 28px;
   height: 28px;
-  background: #101417;
+  background: #050709;
   border-radius: 6px;
   font-weight: 800;
 }
@@ -130,9 +246,36 @@ h2 {
 
 .resource-list,
 .milestones,
-.control-grid {
+.control-grid,
+.blueprint-controls {
   display: grid;
   gap: 8px;
+}
+
+.blueprint-controls {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.blueprint-controls button {
+  min-height: 36px;
+  color: #edf4f7;
+  background: #0d1b24;
+  border: 1px solid #2e7da4;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.blueprint-controls button:disabled {
+  color: #687981;
+  background: #15242c;
+  cursor: not-allowed;
+}
+
+.blueprint-status {
+  margin-top: 8px;
+  color: #9fb1bd;
+  font-size: 13px;
+  line-height: 1.35;
 }
 
 .resource-row,
@@ -143,8 +286,8 @@ h2 {
   gap: 8px;
   min-height: 34px;
   padding: 8px 10px;
-  background: #202a31;
-  border: 1px solid #33434c;
+  background: #0d1b24;
+  border: 1px solid #2e7da4;
   border-radius: 8px;
 }
 
@@ -193,5 +336,21 @@ h2 {
   .side-panel {
     border-left: 0;
     border-top: 1px solid #2d3c44;
+  }
+
+  .objective-banner {
+    top: 10px;
+  }
+}
+
+@keyframes completePulse {
+  0% {
+    transform: translateX(-50%) scale(1);
+  }
+  45% {
+    transform: translateX(-50%) scale(1.04);
+  }
+  100% {
+    transform: translateX(-50%) scale(1);
   }
 }
