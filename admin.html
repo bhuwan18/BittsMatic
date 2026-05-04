@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BittsMatic — Admin</title>
+    <meta name="google-signin-client_id" content="110632840196-ufm82a21h74p6utj3ca3gv4blm9nkkp0.apps.googleusercontent.com" />
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <link rel="stylesheet" href="./src/admin.css" />
+  </head>
+  <body>
+    <div class="admin-shell">
+      <header class="admin-header">
+        <h1>BittsMatic — Admin</h1>
+        <a href="index.html" class="back-link">← Back to game</a>
+      </header>
+
+      <div id="adminLogin" class="admin-login">
+        <p class="admin-hint">Sign in with your admin Google account to continue.</p>
+        <div id="adminGoogleButton"></div>
+        <p class="login-error" id="adminLoginError" role="status"></p>
+      </div>
+
+      <div id="accessDenied" class="access-denied" hidden>
+        <p>Access denied. This page is restricted to the authorized administrator.</p>
+        <button id="adminSignOut" type="button">Sign out</button>
+      </div>
+
+      <div id="adminPanel" hidden>
+        <div class="admin-toolbar">
+          <span id="adminUserCount"></span>
+          <button id="adminRefresh" type="button">↻ Refresh</button>
+          <button id="adminSignOut2" type="button">Sign out</button>
+        </div>
+        <div class="table-wrap">
+          <table id="userTable">
+            <thead>
+              <tr>
+                <th data-col="name">Name</th>
+                <th data-col="email">Email</th>
+                <th data-col="currentLevel">Level</th>
+                <th data-col="completedObjectivesCount">Completed</th>
+                <th data-col="wrongDeliveries">Wrong deliveries</th>
+                <th data-col="upgradePoints">Upgrade pts</th>
+                <th data-col="lastLogin">Last login ↓</th>
+              </tr>
+            </thead>
+            <tbody id="userTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="./src/admin.js"></script>
+  </body>
+</html>

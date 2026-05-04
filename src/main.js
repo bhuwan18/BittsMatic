@@ -9,6 +9,12 @@ import { AuthSession, profileFromGoogleCredential } from "./systems/AuthSession.
 import { Progression } from "./systems/Progression.js";
 import { MarkerManager } from "./systems/MarkerManager.js";
 import { StatsCollector } from "./systems/StatsCollector.js";
+import { ADMIN_GOOGLE_ID } from "./config/admin.js";
+import { FIREBASE_CONFIG } from "./config/firebase.js";
+import { FirestoreSync } from "./systems/FirestoreSync.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, signInWithCredential, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const canvas = document.querySelector("#game");
 const toolbar = document.querySelector("#toolbar");
@@ -31,6 +37,7 @@ const upgradePointsLabel = document.querySelector("#upgradePointsLabel");
 const upgradeShop = document.querySelector("#upgradeShop");
 const controlsToggle = document.querySelector("#controlsToggle");
 const controlsContent = document.querySelector("#controlsContent");
+const adminLink = document.querySelector("#adminLink");
 
 const auth = new AuthSession();
 const markers = new MarkerManager();
@@ -43,6 +50,30 @@ let input = null;
 let animationFrame = 0;
 let lastTime = 0;
 let lastCompletedObjective = null;
+
+let fbAuth = null;
+let firestoreSync = null;
+let fbUserId = null;
+
+if (FIREBASE_CONFIG.projectId) {
+  try {
+    const fbApp = initializeApp(FIREBASE_CONFIG);
+    fbAuth = getAuth(fbApp);
+    firestoreSync = new FirestoreSync(getFirestore(fbApp));
+    onAuthStateChanged(fbAuth, (fbUser) => {
+      if (!fbUser) return;
+      fbUserId = fbUser.uid;
+      if (adminLink && ADMIN_GOOGLE_ID && fbUserId === ADMIN_GOOGLE_ID) {
+        adminLink.style.display = "";
+      }
+      if (firestoreSync && auth.isLoggedIn()) {
+        firestoreSync.syncUser(auth.user, fbUserId).catch(console.error);
+      }
+    });
+  } catch (e) {
+    console.warn("Firebase init failed:", e.message);
+  }
+}
 
 if (auth.isLoggedIn()) {
   showGame();
@@ -83,10 +114,16 @@ function renderGoogleButton() {
 
     globalThis.google.accounts.id.initialize({
       client_id: clientId,
-      callback: (response) => {
+      callback: async (response) => {
         try {
           const profile = profileFromGoogleCredential(response.credential);
           auth.signInWithProfile(profile);
+          if (fbAuth && firestoreSync) {
+            const credential = GoogleAuthProvider.credential(response.credential);
+            const { user: fbUser } = await signInWithCredential(fbAuth, credential);
+            fbUserId = fbUser.uid;
+            firestoreSync.syncUser(auth.user, fbUserId).catch(console.error);
+          }
           showGame();
         } catch (error) {
           loginError.textContent = error.message || "Google sign-in failed. Please try again.";
@@ -110,7 +147,9 @@ function startGame() {
   progression = new Progression({
     saveData: auth.loadProgress(),
     onChange: (state) => {
-      auth.saveProgress(state.toSaveData());
+      const saveData = state.toSaveData();
+      auth.saveProgress(saveData);
+      if (firestoreSync && fbUserId) firestoreSync.syncProgress(fbUserId, saveData).catch(console.error);
       updateUi(false);
     }
   });
