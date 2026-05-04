@@ -785,7 +785,7 @@
             <div class="glyph glyph-red">−</div>
             <div>
               <div class="mc-name">Subtract</div>
-              <div class="mc-unlock">Level 13 · Hotkey <span class="key">4</span></div>
+              <div class="mc-unlock">Level 1 · Hotkey <span class="key">4</span></div>
             </div>
           </div>
           <p>Computes <code>A − B</code>. Use to reduce values or extract specific differences. Negative results are valid items.</p>
@@ -797,7 +797,7 @@
             <div class="glyph glyph-gold">×</div>
             <div>
               <div class="mc-name">Multiply</div>
-              <div class="mc-unlock">Level 7 · Hotkey <span class="key">5</span></div>
+              <div class="mc-unlock">Level 4 · Hotkey <span class="key">5</span></div>
             </div>
           </div>
           <p>Computes <code>A × B</code>. Powerful for reaching large target values quickly. Combine with an Extractor chain to scale numbers exponentially.</p>
@@ -809,7 +809,7 @@
             <div class="glyph glyph-orange">÷</div>
             <div>
               <div class="mc-name">Divide</div>
-              <div class="mc-unlock">Level 16 · Hotkey <span class="key">6</span></div>
+              <div class="mc-unlock">Level 10 · Hotkey <span class="key">6</span></div>
             </div>
           </div>
           <p>Computes <code>floor(A ÷ B)</code> on the primary output and emits <code>A mod B</code> (the remainder) on a separate <em>secondary output</em> direction. Division by zero yields 0 on both outputs.</p>
@@ -864,7 +864,7 @@
       <p>Each belt tile holds <strong>one item</strong> at a time and carries it in a single direction. Items move along a normalized offset (0 = just arrived, 1 = ready to hand off). When an item reaches offset 1 it attempts to transfer to the next tile; if that tile is occupied or blocked the item waits.</p>
 
       <h3>Bridges</h3>
-      <p>When you draw a belt that crosses an existing belt perpendicularly, the game <strong>automatically upgrades</strong> that intersection tile to a <em>Bridge</em> (unlocked at level 4). A Bridge is a two-layer tile: each layer independently carries items in its original direction without interference. Items on the horizontal layer and vertical layer never interact.</p>
+      <p>When you draw a belt that crosses an existing belt perpendicularly, the game <strong>automatically upgrades</strong> that intersection tile to a <em>Bridge</em> (unlocked at level 13). A Bridge is a two-layer tile: each layer independently carries items in its original direction without interference. Items on the horizontal layer and vertical layer never interact.</p>
 
       <div class="callout tip">
         <strong>Tip — Compact routing</strong>
@@ -933,31 +933,23 @@
         </div>
         <div class="tl-item">
           <div class="tl-level">Level 1</div>
-          <div class="tl-text"><strong>Add</strong> machine unlocked.</div>
+          <div class="tl-text"><strong>Add</strong> and <strong>Subtract</strong> machines unlocked.</div>
         </div>
         <div class="tl-item">
           <div class="tl-level">Level 4</div>
-          <div class="tl-text"><strong>Bridge</strong> crossing unlocked — perpendicular belts now auto-upgrade to bridges.</div>
+          <div class="tl-text"><strong>Multiply</strong> machine unlocked.</div>
         </div>
         <div class="tl-item tl-gold">
           <div class="tl-level">Level 5</div>
           <div class="tl-text"><strong>Extractor Speed</strong> upgrade becomes available in the shop.</div>
         </div>
-        <div class="tl-item">
-          <div class="tl-level">Level 7</div>
-          <div class="tl-text"><strong>Multiply</strong> machine unlocked.</div>
-        </div>
         <div class="tl-item tl-gold">
           <div class="tl-level">Level 10</div>
-          <div class="tl-text"><strong>Belt Speed</strong> upgrade becomes available in the shop.</div>
+          <div class="tl-text"><strong>Divide</strong> machine unlocked; <strong>Belt Speed</strong> upgrade becomes available in the shop.</div>
         </div>
         <div class="tl-item">
           <div class="tl-level">Level 13</div>
-          <div class="tl-text"><strong>Subtract</strong> machine unlocked.</div>
-        </div>
-        <div class="tl-item">
-          <div class="tl-level">Level 16</div>
-          <div class="tl-text"><strong>Divide</strong> machine unlocked (with remainder secondary output).</div>
+          <div class="tl-text"><strong>Bridge</strong> crossing unlocked — perpendicular belts now auto-upgrade to bridges.</div>
         </div>
         <div class="tl-item">
           <div class="tl-level">Level 19</div>
@@ -1101,19 +1093,21 @@
         </div>
       </div>
 
-      <h3>Early Game (Levels 1–6)</h3>
+      <h3>Early Game (Levels 1–5)</h3>
       <ul style="padding-left:1.4rem; line-height:2.1;">
         <li>Place extractors on every nearby node — even ones you do not immediately need. More inputs = more flexibility.</li>
         <li>Use Add machines to double a stream: feed the same line into both A and B inputs via a split.</li>
+        <li>Subtract unlocks alongside Add at level 1 — useful for fine-tuning values even in the early game.</li>
         <li>Deliver directly to the CORE for the early single-digit targets; machines are overhead you do not yet need.</li>
       </ul>
 
-      <h3>Mid Game (Levels 7–18)</h3>
+      <h3>Mid Game (Levels 4–18)</h3>
       <ul style="padding-left:1.4rem; line-height:2.1;">
-        <li>Multiply unlocks at level 7 — immediately build a <code>1 × 1 = 1</code> chain then upgrade to <code>n × n</code> to reach targets like 64, 128.</li>
+        <li>Multiply unlocks at level 4 — immediately build a <code>1 × 1 = 1</code> chain then upgrade to <code>n × n</code> to reach targets like 64, 128.</li>
         <li>Buy Extractor Speed at level 5 before anything else — it doubles production rate cheaply.</li>
+        <li>Divide arrives at level 10 with a bonus remainder output; route the remainder back into your factory to avoid waste.</li>
         <li>Use blueprints to duplicate your successful doubling chains rather than rebuilding from scratch.</li>
-        <li>Bridges let you route belts freely without rerouting. Cross lines liberally.</li>
+        <li>Bridges unlock at level 13 — until then, plan belt routes to avoid crossings.</li>
       </ul>
 
       <h3>Late Game (Levels 19–30)</h3>
@@ -1121,6 +1115,7 @@
         <li>Exponentiate is the key to targets like 2048 (<code>2^11</code>), 1296 (<code>6^4</code>), 729 (<code>3^6</code>). Plan the base and exponent streams carefully.</li>
         <li>Storage machines smooth out timing mismatches between arms of a pipeline — particularly useful when one math chain is slower than another.</li>
         <li>Divide's remainder output is a free by-product — route it somewhere useful rather than letting it block.</li>
+        <li>By this stage bridges (unlocked level 13) are available — use them freely to keep your layout compact.</li>
         <li>Belt Speed tier 3 (4×) combined with Extractor Speed tier 3 (2.5×) gives enormous throughput — buy these before tackling the high-value final objectives.</li>
       </ul>
 
@@ -1143,9 +1138,9 @@
             <tr><td><span class="key">1</span></td><td>Belt tool</td><td>Drag to draw continuous belt runs</td></tr>
             <tr><td><span class="key">2</span></td><td>Extractor tool</td><td>Place on resource nodes only</td></tr>
             <tr><td><span class="key">3</span></td><td>Add machine</td><td>Unlocks at level 1</td></tr>
-            <tr><td><span class="key">4</span></td><td>Subtract machine</td><td>Unlocks at level 13</td></tr>
-            <tr><td><span class="key">5</span></td><td>Multiply machine</td><td>Unlocks at level 7</td></tr>
-            <tr><td><span class="key">6</span></td><td>Divide machine</td><td>Unlocks at level 16; has secondary output</td></tr>
+            <tr><td><span class="key">4</span></td><td>Subtract machine</td><td>Unlocks at level 1</td></tr>
+            <tr><td><span class="key">5</span></td><td>Multiply machine</td><td>Unlocks at level 4</td></tr>
+            <tr><td><span class="key">6</span></td><td>Divide machine</td><td>Unlocks at level 10; has secondary output</td></tr>
             <tr><td><span class="key">7</span></td><td>Remove tool</td><td>Delete any placed tile</td></tr>
             <tr><td><span class="key">8</span></td><td>Select tool</td><td>Drag to select a rectangle</td></tr>
             <tr><td><span class="key">9</span></td><td>Exponentiate machine</td><td>Unlocks at level 19</td></tr>
