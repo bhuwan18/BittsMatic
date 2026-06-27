@@ -6,6 +6,7 @@ import { InputHandler } from "./input/InputHandler.js";
 import { Renderer } from "./rendering/Renderer.js";
 import { TOOLS } from "./config/recipes.js";
 import { AuthSession, profileFromGoogleCredential } from "./systems/AuthSession.js";
+import { CrazyGamesSDK } from "./systems/CrazyGamesSDK.js";
 import { Progression } from "./systems/Progression.js";
 import { MarkerManager } from "./systems/MarkerManager.js";
 import { StatsCollector } from "./systems/StatsCollector.js";
@@ -42,6 +43,7 @@ const adminLink = document.querySelector("#adminLink");
 const auth = new AuthSession();
 const markers = new MarkerManager();
 const stats = new StatsCollector();
+const cgSdk = new CrazyGamesSDK();
 let grid = null;
 let progression = null;
 let loop = null;
@@ -75,13 +77,48 @@ if (FIREBASE_CONFIG.projectId) {
   }
 }
 
-if (auth.isLoggedIn()) {
-  showGame();
-} else {
-  showLogin();
-}
+(async () => {
+  const cgReady = await cgSdk.init();
+
+  if (cgReady) {
+    cgSdk.loadingStart();
+
+    // Apply locale from SDK so the page lang attribute is accurate.
+    const sysInfo = await cgSdk.getSystemInfo();
+    if (sysInfo?.locale) {
+      document.documentElement.lang = sysInfo.locale;
+    }
+
+    const cgUser = await cgSdk.getUser();
+    const cgUserId = cgUser ? await cgSdk.getUserId() : null;
+    if (cgUser && cgUserId) {
+      try {
+        auth.signInWithProfile({ id: cgUserId, name: cgUser.username, email: "" });
+      } catch { /* guest — no id from token */ }
+    }
+
+    // Detect mid-session logins (guest plays then logs into CrazyGames).
+    cgSdk.addAuthListener(async (cgUser) => {
+      if (!cgUser) return;
+      const uid = await cgSdk.getUserId();
+      if (!uid) return;
+      try {
+        auth.signInWithProfile({ id: uid, name: cgUser.username, email: "" });
+      } catch {}
+      if (playerName) playerName.textContent = `Signed in as ${cgUser.username}`;
+      if (progression) auth.saveProgress(progression.toSaveData());
+    });
+
+    showGame();
+  } else if (auth.isLoggedIn()) {
+    showGame();
+  } else {
+    showLogin();
+  }
+})();
 
 logoutButton.addEventListener("click", () => {
+  cgSdk.gameplayStop();
   auth.signOut();
   if (animationFrame) cancelAnimationFrame(animationFrame);
   window.location.reload();
@@ -177,6 +214,7 @@ function startGame() {
   });
 
   window.addEventListener("resize", () => renderer.resize());
+  window.addEventListener("pagehide", () => cgSdk.gameplayStop());
   renderer.resize();
   renderer.centerOn(coreX + 1, coreY + 1);
   playerName.textContent = auth.user?.name ? `Signed in as ${auth.user.name}` : "Signed in";
@@ -184,6 +222,9 @@ function startGame() {
 
   // Seed a tiny hint of direction without solving the factory for the player.
   grid.placeBelt(coreX - 1, coreY + 1, Direction.Right);
+
+  cgSdk.loadingStop();
+  cgSdk.gameplayStart();
 
   lastTime = performance.now();
   animationFrame = requestAnimationFrame(frame);
@@ -230,6 +271,8 @@ function renderObjective() {
       successToast.classList.add("show");
       window.setTimeout(() => successToast.classList.remove("show"), 1800);
     });
+    cgSdk.gameplayStop();
+    cgSdk.requestMidgameAd().then(() => cgSdk.gameplayStart());
   }
 }
 
