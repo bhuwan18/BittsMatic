@@ -39,6 +39,7 @@ const upgradeShop = document.querySelector("#upgradeShop");
 const controlsToggle = document.querySelector("#controlsToggle");
 const controlsContent = document.querySelector("#controlsContent");
 const adminLink = document.querySelector("#adminLink");
+const guestButton = document.querySelector("#guestButton");
 
 const auth = new AuthSession();
 const markers = new MarkerManager();
@@ -128,6 +129,21 @@ function showLogin() {
   loginScreen.hidden = false;
   document.body.dataset.auth = "login";
   renderGoogleButton();
+  guestButton.addEventListener("click", () => {
+    const id = getOrCreateGuestId();
+    auth.signInWithProfile({ id, name: "Guest", email: "" });
+    showGame();
+  }, { once: true });
+}
+
+function getOrCreateGuestId() {
+  const key = "bitts-matic.guest-id";
+  let id = localStorage.getItem(key);
+  if (!id) {
+    id = "guest-" + Math.random().toString(36).slice(2, 10);
+    localStorage.setItem(key, id);
+  }
+  return id;
 }
 
 function showGame() {

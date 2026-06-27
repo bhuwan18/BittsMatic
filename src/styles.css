@@ -52,6 +52,22 @@ button {
   min-height: 44px;
 }
 
+.guest-button {
+  padding: 10px;
+  background: transparent;
+  border: 1px solid rgba(102, 190, 231, 0.25);
+  border-radius: 4px;
+  color: #6a8a96;
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.guest-button:hover {
+  border-color: rgba(102, 190, 231, 0.5);
+  color: #9abfcf;
+}
+
 .login-error {
   min-height: 18px;
   color: #ffcf8a;
